@@ -3,7 +3,15 @@ Special controls for wxPython by M45Development
 
 This package contains custom wrappers for existing wxPython controls, primarily to work around GUI limitations and solve accessibility issues. As these modules were built for my own projects, the supported features are likely to be incomplete. However, feel free to open an issue or contribute missing features as a pull request. 
 
-## Modules
+## Installation
+
+Until official PyPI packages are available, Grab the latest whl from the releases page and install it into your project environment. Then import one of the provided controls, e.g.: 
+
+```
+from m45wxcontrols import AccessibleSpinCtrl, CustomTextEntryDialog, UniversalListCtrl
+```
+
+## Controls
 
 ### AccessibleSpinCtrl
 An accessible floating-point spin control composed of wx widgets. Can be used as a more accessible alternative to `wx.SpinCtrlDouble`.
