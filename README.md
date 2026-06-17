@@ -1,5 +1,5 @@
 # M45wxControls
-Special controls for wxPython by M45Development
+Custom control wrappers for wxPython by M45Development.
 
 This package contains custom wrappers for existing wxPython controls, primarily to work around GUI limitations and solve accessibility issues. As these modules were built for my own projects, the supported features are likely to be incomplete. However, feel free to open an issue or contribute missing features as a pull request. 
 
@@ -28,9 +28,9 @@ The following arguments are available:
 * `inc`: Increment used by the spin button and Up/Down arrow keys.
 
 ### CustomTextEntryDialog
-Custom text entry dialog with translatable button labels.
+Text entry dialog with custom button labels.
 
-The dialog mirrors the simple wx.TextEntryDialog workflow while allowing callers to provide localized OK and Cancel labels.
+The dialog mirrors the simple wx.TextEntryDialog workflow while allowing callers to provide custom OK and Cancel labels.
 
 The following arguments are available: 
 

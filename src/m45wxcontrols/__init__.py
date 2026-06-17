@@ -1,5 +1,5 @@
 """
-Special controls for wxPython by M45Development
+Custom control wrappers for wxPython by M45Development
 """
 from .accessible_spin import AccessibleSpinCtrl
 from .custom_text_entry import CustomTextEntryDialog

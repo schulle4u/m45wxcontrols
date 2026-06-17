@@ -1,13 +1,16 @@
+"""
+Text entry dialog with custom button labels.
+"""
 import wx
 
 
 
 class CustomTextEntryDialog(wx.Dialog):
     """
-    Custom text entry dialog with translatable button labels.
+    Text entry dialog with custom button labels.
 
     The dialog mirrors the simple wx.TextEntryDialog workflow while allowing
-    callers to provide localized OK and Cancel labels.
+    callers to provide custom OK and Cancel labels.
     """
 
     def __init__(self, parent, message, caption, default_value="", ok_label="&OK", cancel_label="&Cancel"):
