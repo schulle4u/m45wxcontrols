@@ -28,7 +28,6 @@ classifiers = [
 ]
 dependencies = [
   "wxPython>=4.2.0",
-  "pdoc",
 ]
 
 [project.urls]
