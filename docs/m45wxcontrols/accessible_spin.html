@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+<meta name="generator" content="pdoc3 0.11.6">
+<title>m45wxcontrols.accessible_spin API documentation</title>
+<meta name="description" content="Accessible spinbutton class">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/sanitize.min.css" integrity="sha512-y1dtMcuvtTMJc1yPgEqF0ZjQbhnc/bFhyvIyVNb9Zk5mIGtqVaAB1Ttl28su8AvFMOY0EwRbAe+HCLqj6W7/KA==" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/typography.min.css" integrity="sha512-Y1DYSb995BAfxobCkKepB1BqJJTPrOp3zPL74AWFugHHmmdcvO+C48WLrUOlhGMc0QG7AE3f7gmvvcrmX2fDoA==" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:1.5em;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:2em 0 .50em 0}h3{font-size:1.4em;margin:1.6em 0 .7em 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .2s ease-in-out}a:visited{color:#503}a:hover{color:#b62}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900;font-weight:bold}pre code{font-size:.8em;line-height:1.4em;padding:1em;display:block}code{background:#f3f3f3;font-family:"DejaVu Sans Mono",monospace;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source > summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible;min-width:max-content}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em 1em;margin:1em 0}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul ul{padding-left:1em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" integrity="sha512-D9gUyxqja7hBtkWpPWGt9wfbfaMGVt9gnyCvYa+jojwwPHLCzUm5i8rpk7vD7wNee9bA35eYIjobYPaQuKS1MQ==" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => {
+hljs.configure({languages: ['bash', 'css', 'diff', 'graphql', 'ini', 'javascript', 'json', 'plaintext', 'python', 'python-repl', 'rust', 'shell', 'sql', 'typescript', 'xml', 'yaml']});
+hljs.highlightAll();
+/* Collapse source docstrings */
+setTimeout(() => {
+[...document.querySelectorAll('.hljs.language-python > .hljs-string')]
+.filter(el => el.innerHTML.length > 200 && ['"""', "'''"].includes(el.innerHTML.substring(0, 3)))
+.forEach(el => {
+let d = document.createElement('details');
+d.classList.add('hljs-string');
+d.innerHTML = '<summary>"""</summary>' + el.innerHTML.substring(3);
+el.replaceWith(d);
+});
+}, 100);
+})</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>m45wxcontrols.accessible_spin</code></h1>
+</header>
+<section id="section-intro">
+<p>Accessible spinbutton class</p>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="m45wxcontrols.accessible_spin.AccessibleSpinCtrl"><code class="flex name class">
+<span>class <span class="ident">AccessibleSpinCtrl</span></span>
+<span>(</span><span>parent, label_text, initial_val, min_val, max_val, inc)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class AccessibleSpinCtrl(wx.BoxSizer):
+    &#34;&#34;&#34;
+    Accessible floating-point spin control composed of wx widgets.
+
+    The control exposes a labeled text field as the primary interaction point
+    and keeps a wx.SpinButton in sync for mouse users. Arrow keys on the text
+    field adjust the value directly, which makes the widget easier to use with
+    screen readers.
+    &#34;&#34;&#34;
+
+    def __init__(self, parent, label_text, initial_val, min_val, max_val, inc):
+        &#34;&#34;&#34;
+        Initialize accessible spin control.
+
+        Args:
+            parent: Parent wx window that owns the child controls.
+            label_text: Label shown next to the text field and used as its
+                accessible name.
+            initial_val: Initial numeric value displayed in the control.
+            min_val: Minimum allowed value.
+            max_val: Maximum allowed value.
+            inc: Increment used by the spin button and Up/Down arrow keys.
+        &#34;&#34;&#34;
+        super().__init__(wx.HORIZONTAL)
+        
+        self.min_val = min_val
+        self.max_val = max_val
+        self.inc = inc
+        
+        # 1. The Label
+        self.label = wx.StaticText(parent, label=label_text)
+        self.Add(self.label, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
+        
+        # 2. The TextCtrl (The primary interaction point)
+        self.text_ctrl = wx.TextCtrl(parent, value=f&#34;{initial_val:.1f}&#34;)
+        self.text_ctrl.SetName(label_text)
+        self.Add(self.text_ctrl, 1, wx.EXPAND | wx.ALL, 5)
+        
+        # 3. The SpinButton (Visible for mouse users)
+        self.spin_btn = wx.SpinButton(parent, style=wx.SP_VERTICAL)
+        self.spin_btn.SetRange(int(min_val / inc), int(max_val / inc))
+        self.spin_btn.SetValue(int(initial_val / inc))
+        self.spin_btn.SetCanFocus(False)
+        self.Add(self.spin_btn, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
+        
+        # Bindings
+        self.spin_btn.Bind(wx.EVT_SPIN, self.on_spin)
+        self.text_ctrl.Bind(wx.EVT_TEXT, self.on_text_entry)
+        
+        # Accessibility: Allow Up/Down arrow keys directly in the TextCtrl
+        self.text_ctrl.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
+
+    def Bind(self, event_type, handler, *args, **kwargs):
+        &#34;&#34;&#34;
+        Proxy method to allow the dialog to bind to changes.
+        We map any binding attempt to our internal controls.
+
+        Args:
+            event_type: Ignored wx event binder supplied by the caller.
+            handler: Callable to bind to text and spin changes.
+            *args: Additional positional arguments forwarded to wx.Bind.
+            **kwargs: Additional keyword arguments forwarded to wx.Bind.
+        &#34;&#34;&#34;
+        # We bind to both text changes and spin changes
+        self.text_ctrl.Bind(wx.EVT_TEXT, handler, *args, **kwargs)
+        self.spin_btn.Bind(wx.EVT_SPIN, handler, *args, **kwargs)
+
+    def _adjust_value(self, steps):
+        &#34;&#34;&#34;
+        Internal helper to increment/decrement the value.
+
+        Args:
+            steps: Number of increments to apply. Negative values decrement.
+        &#34;&#34;&#34;
+        try:
+            current = float(self.text_ctrl.GetValue())
+            new_val = current + (steps * self.inc)
+            # Clamp value
+            new_val = max(self.min_val, min(self.max_val, new_val))
+            
+            # Update both controls
+            formatted_val = f&#34;{new_val:.1f}&#34;
+            self.text_ctrl.SetValue(formatted_val) 
+            # Note: SetValue triggers NVDA to read the new content
+            
+            self.spin_btn.SetValue(int(new_val / self.inc))
+        except ValueError:
+            pass
+
+    def on_spin(self, event):
+        &#34;&#34;&#34;
+        Handle spin button changes and mirror the value into the text field.
+
+        Args:
+            event: wx spin event containing the current spin position.
+        &#34;&#34;&#34;
+        new_val = event.GetPosition() * self.inc
+        self.text_ctrl.ChangeValue(f&#34;{new_val:.1f}&#34;)
+        event.Skip() # CRITICAL: Allows the event to propagate to the dialog
+
+    def on_text_entry(self, event):
+        &#34;&#34;&#34;
+        Handle manual text edits and keep the spin button position in sync.
+
+        Args:
+            event: wx text event emitted by the internal text control.
+        &#34;&#34;&#34;
+        try:
+            val = float(self.text_ctrl.GetValue())
+            self.spin_btn.SetValue(int(val / self.inc))
+        except ValueError:
+            pass
+        event.Skip() # CRITICAL: Allows the event to propagate to the dialog
+
+    def on_key_down(self, event):
+        &#34;&#34;&#34;
+        Handle keyboard increments from the internal text control.
+
+        Args:
+            event: wx key event. Up and Down adjust the value; all other keys
+                are passed through.
+        &#34;&#34;&#34;
+        key = event.GetKeyCode()
+        if key in (wx.WXK_UP, wx.WXK_DOWN):
+            steps = 1 if key == wx.WXK_UP else -1
+            self._adjust_value(steps)
+            
+            # Manually fire a text event so the dialog knows something changed
+            # since _adjust_value uses SetValue/ChangeValue
+            cmd_event = wx.CommandEvent(wx.wxEVT_TEXT, self.text_ctrl.GetId())
+            cmd_event.SetString(self.text_ctrl.GetValue())
+            self.text_ctrl.GetEventHandler().ProcessEvent(cmd_event)
+        else:
+            event.Skip()
+
+    def GetValue(self):
+        &#34;&#34;&#34;
+        Return the current numeric value.
+
+        Returns:
+            float: Parsed text control value, or 2.0 if the text is not a
+            valid number.
+        &#34;&#34;&#34;
+        try:
+            return float(self.text_ctrl.GetValue())
+        except ValueError:
+            return 2.0</code></pre>
+</details>
+<div class="desc"><p>Accessible floating-point spin control composed of wx widgets.</p>
+<p>The control exposes a labeled text field as the primary interaction point
+and keeps a wx.SpinButton in sync for mouse users. Arrow keys on the text
+field adjust the value directly, which makes the widget easier to use with
+screen readers.</p>
+<p>Initialize accessible spin control.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>parent</code></strong></dt>
+<dd>Parent wx window that owns the child controls.</dd>
+<dt><strong><code>label_text</code></strong></dt>
+<dd>Label shown next to the text field and used as its
+accessible name.</dd>
+<dt><strong><code>initial_val</code></strong></dt>
+<dd>Initial numeric value displayed in the control.</dd>
+<dt><strong><code>min_val</code></strong></dt>
+<dd>Minimum allowed value.</dd>
+<dt><strong><code>max_val</code></strong></dt>
+<dd>Maximum allowed value.</dd>
+<dt><strong><code>inc</code></strong></dt>
+<dd>Increment used by the spin button and Up/Down arrow keys.</dd>
+</dl></div>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>wx._core.BoxSizer</li>
+<li>wx._core.Sizer</li>
+<li>wx._core.Object</li>
+<li>sip.wrapper</li>
+<li>sip.simplewrapper</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="m45wxcontrols.accessible_spin.AccessibleSpinCtrl.Bind"><code class="name flex">
+<span>def <span class="ident">Bind</span></span>(<span>self, event_type, handler, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Bind(self, event_type, handler, *args, **kwargs):
+    &#34;&#34;&#34;
+    Proxy method to allow the dialog to bind to changes.
+    We map any binding attempt to our internal controls.
+
+    Args:
+        event_type: Ignored wx event binder supplied by the caller.
+        handler: Callable to bind to text and spin changes.
+        *args: Additional positional arguments forwarded to wx.Bind.
+        **kwargs: Additional keyword arguments forwarded to wx.Bind.
+    &#34;&#34;&#34;
+    # We bind to both text changes and spin changes
+    self.text_ctrl.Bind(wx.EVT_TEXT, handler, *args, **kwargs)
+    self.spin_btn.Bind(wx.EVT_SPIN, handler, *args, **kwargs)</code></pre>
+</details>
+<div class="desc"><p>Proxy method to allow the dialog to bind to changes.
+We map any binding attempt to our internal controls.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>event_type</code></strong></dt>
+<dd>Ignored wx event binder supplied by the caller.</dd>
+<dt><strong><code>handler</code></strong></dt>
+<dd>Callable to bind to text and spin changes.</dd>
+<dt><strong><code>*args</code></strong></dt>
+<dd>Additional positional arguments forwarded to wx.Bind.</dd>
+<dt><strong><code>**kwargs</code></strong></dt>
+<dd>Additional keyword arguments forwarded to wx.Bind.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.accessible_spin.AccessibleSpinCtrl.GetValue"><code class="name flex">
+<span>def <span class="ident">GetValue</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GetValue(self):
+    &#34;&#34;&#34;
+    Return the current numeric value.
+
+    Returns:
+        float: Parsed text control value, or 2.0 if the text is not a
+        valid number.
+    &#34;&#34;&#34;
+    try:
+        return float(self.text_ctrl.GetValue())
+    except ValueError:
+        return 2.0</code></pre>
+</details>
+<div class="desc"><p>Return the current numeric value.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>Parsed text control value, or 2.0 if the text is not a</dd>
+</dl>
+<p>valid number.</p></div>
+</dd>
+<dt id="m45wxcontrols.accessible_spin.AccessibleSpinCtrl.on_key_down"><code class="name flex">
+<span>def <span class="ident">on_key_down</span></span>(<span>self, event)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def on_key_down(self, event):
+    &#34;&#34;&#34;
+    Handle keyboard increments from the internal text control.
+
+    Args:
+        event: wx key event. Up and Down adjust the value; all other keys
+            are passed through.
+    &#34;&#34;&#34;
+    key = event.GetKeyCode()
+    if key in (wx.WXK_UP, wx.WXK_DOWN):
+        steps = 1 if key == wx.WXK_UP else -1
+        self._adjust_value(steps)
+        
+        # Manually fire a text event so the dialog knows something changed
+        # since _adjust_value uses SetValue/ChangeValue
+        cmd_event = wx.CommandEvent(wx.wxEVT_TEXT, self.text_ctrl.GetId())
+        cmd_event.SetString(self.text_ctrl.GetValue())
+        self.text_ctrl.GetEventHandler().ProcessEvent(cmd_event)
+    else:
+        event.Skip()</code></pre>
+</details>
+<div class="desc"><p>Handle keyboard increments from the internal text control.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>event</code></strong></dt>
+<dd>wx key event. Up and Down adjust the value; all other keys
+are passed through.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.accessible_spin.AccessibleSpinCtrl.on_spin"><code class="name flex">
+<span>def <span class="ident">on_spin</span></span>(<span>self, event)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def on_spin(self, event):
+    &#34;&#34;&#34;
+    Handle spin button changes and mirror the value into the text field.
+
+    Args:
+        event: wx spin event containing the current spin position.
+    &#34;&#34;&#34;
+    new_val = event.GetPosition() * self.inc
+    self.text_ctrl.ChangeValue(f&#34;{new_val:.1f}&#34;)
+    event.Skip() # CRITICAL: Allows the event to propagate to the dialog</code></pre>
+</details>
+<div class="desc"><p>Handle spin button changes and mirror the value into the text field.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>event</code></strong></dt>
+<dd>wx spin event containing the current spin position.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.accessible_spin.AccessibleSpinCtrl.on_text_entry"><code class="name flex">
+<span>def <span class="ident">on_text_entry</span></span>(<span>self, event)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def on_text_entry(self, event):
+    &#34;&#34;&#34;
+    Handle manual text edits and keep the spin button position in sync.
+
+    Args:
+        event: wx text event emitted by the internal text control.
+    &#34;&#34;&#34;
+    try:
+        val = float(self.text_ctrl.GetValue())
+        self.spin_btn.SetValue(int(val / self.inc))
+    except ValueError:
+        pass
+    event.Skip() # CRITICAL: Allows the event to propagate to the dialog</code></pre>
+</details>
+<div class="desc"><p>Handle manual text edits and keep the spin button position in sync.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>event</code></strong></dt>
+<dd>wx text event emitted by the internal text control.</dd>
+</dl></div>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="m45wxcontrols" href="index.html">m45wxcontrols</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="m45wxcontrols.accessible_spin.AccessibleSpinCtrl" href="#m45wxcontrols.accessible_spin.AccessibleSpinCtrl">AccessibleSpinCtrl</a></code></h4>
+<ul class="">
+<li><code><a title="m45wxcontrols.accessible_spin.AccessibleSpinCtrl.Bind" href="#m45wxcontrols.accessible_spin.AccessibleSpinCtrl.Bind">Bind</a></code></li>
+<li><code><a title="m45wxcontrols.accessible_spin.AccessibleSpinCtrl.GetValue" href="#m45wxcontrols.accessible_spin.AccessibleSpinCtrl.GetValue">GetValue</a></code></li>
+<li><code><a title="m45wxcontrols.accessible_spin.AccessibleSpinCtrl.on_key_down" href="#m45wxcontrols.accessible_spin.AccessibleSpinCtrl.on_key_down">on_key_down</a></code></li>
+<li><code><a title="m45wxcontrols.accessible_spin.AccessibleSpinCtrl.on_spin" href="#m45wxcontrols.accessible_spin.AccessibleSpinCtrl.on_spin">on_spin</a></code></li>
+<li><code><a title="m45wxcontrols.accessible_spin.AccessibleSpinCtrl.on_text_entry" href="#m45wxcontrols.accessible_spin.AccessibleSpinCtrl.on_text_entry">on_text_entry</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.11.6</a>.</p>
+</footer>
+</body>
+</html>

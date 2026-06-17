@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+<meta name="generator" content="pdoc3 0.11.6">
+<title>m45wxcontrols.universal_list API documentation</title>
+<meta name="description" content="Universal list class to choose between ListCtrl and DataViewListCtrl">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/sanitize.min.css" integrity="sha512-y1dtMcuvtTMJc1yPgEqF0ZjQbhnc/bFhyvIyVNb9Zk5mIGtqVaAB1Ttl28su8AvFMOY0EwRbAe+HCLqj6W7/KA==" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/typography.min.css" integrity="sha512-Y1DYSb995BAfxobCkKepB1BqJJTPrOp3zPL74AWFugHHmmdcvO+C48WLrUOlhGMc0QG7AE3f7gmvvcrmX2fDoA==" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:1.5em;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:2em 0 .50em 0}h3{font-size:1.4em;margin:1.6em 0 .7em 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .2s ease-in-out}a:visited{color:#503}a:hover{color:#b62}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900;font-weight:bold}pre code{font-size:.8em;line-height:1.4em;padding:1em;display:block}code{background:#f3f3f3;font-family:"DejaVu Sans Mono",monospace;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source > summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible;min-width:max-content}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em 1em;margin:1em 0}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul ul{padding-left:1em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" integrity="sha512-D9gUyxqja7hBtkWpPWGt9wfbfaMGVt9gnyCvYa+jojwwPHLCzUm5i8rpk7vD7wNee9bA35eYIjobYPaQuKS1MQ==" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => {
+hljs.configure({languages: ['bash', 'css', 'diff', 'graphql', 'ini', 'javascript', 'json', 'plaintext', 'python', 'python-repl', 'rust', 'shell', 'sql', 'typescript', 'xml', 'yaml']});
+hljs.highlightAll();
+/* Collapse source docstrings */
+setTimeout(() => {
+[...document.querySelectorAll('.hljs.language-python > .hljs-string')]
+.filter(el => el.innerHTML.length > 200 && ['"""', "'''"].includes(el.innerHTML.substring(0, 3)))
+.forEach(el => {
+let d = document.createElement('details');
+d.classList.add('hljs-string');
+d.innerHTML = '<summary>"""</summary>' + el.innerHTML.substring(3);
+el.replaceWith(d);
+});
+}, 100);
+})</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>m45wxcontrols.universal_list</code></h1>
+</header>
+<section id="section-intro">
+<p>Universal list class to choose between ListCtrl and DataViewListCtrl</p>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="m45wxcontrols.universal_list.UniversalListCtrl"><code class="flex name class">
+<span>class <span class="ident">UniversalListCtrl</span></span>
+<span>(</span><span>parent,<br>size=wx.Size(-1, -1),<br>style=134217760,<br>checkboxes=False,<br>force_dataview=False)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class UniversalListCtrl:
+    &#34;&#34;&#34;
+    Cross-platform list wrapper with optional checkbox support.
+
+    wx.ListCtrl is used on Windows, while wx.dataview.DataViewListCtrl is used
+    on Linux and macOS for better accessibility. The wrapper normalizes the
+    small subset of list operations used by the application.
+    &#34;&#34;&#34;
+
+    EVT_ITEM_CHECKED = wx.NewEventType()
+
+    def __init__(
+        self,
+        parent,
+        size=wx.DefaultSize,
+        style=wx.LC_REPORT | wx.BORDER_SUNKEN,
+        checkboxes=False,
+        force_dataview=False
+    ):
+        &#34;&#34;&#34;
+        Initialize universal list control.
+
+        Args:
+            parent: Parent wx window.
+            size: Initial control size.
+            style: wx style flags applied to the underlying list control.
+            checkboxes: Whether rows should support checked/unchecked state.
+            force_dataview: Force DataViewListCtrl even on platforms that would
+                normally use wx.ListCtrl.
+        &#34;&#34;&#34;
+        # We use DataViewListCtrl for Linux and macOS unless forced (better accessibility)
+        self.use_dataview = sys.platform.startswith(&#39;linux&#39;) or sys.platform == &#39;darwin&#39; or force_dataview
+        self.checkboxes = checkboxes
+        self._checkbox_column = None
+
+        if self.use_dataview:
+            self.control = dv.DataViewListCtrl(parent, style=style, size=size)
+        else:
+            self.control = wx.ListCtrl(parent, style=style, size=size)
+            if self.checkboxes:
+                self.control.EnableCheckBoxes()
+
+    def InsertColumn(self, col, heading, width=wx.LIST_AUTOSIZE, checkbox=False):
+        &#34;&#34;&#34;
+        Insert a column in the underlying control.
+
+        Args:
+            col: Zero-based column index.
+            heading: Text shown in the column header.
+            width: Column width or wx autosize constant.
+            checkbox: Whether this column stores checkbox/toggle values.
+        &#34;&#34;&#34;
+        if self.use_dataview:
+            if checkbox:
+                self.control.AppendToggleColumn(
+                    heading,
+                    mode=dv.DATAVIEW_CELL_ACTIVATABLE,
+                    width=width
+                )
+                self._checkbox_column = col
+            else:
+                self.control.AppendTextColumn(heading, width=width)
+        else:
+            self.control.InsertColumn(col, heading, width=width)
+            if checkbox:
+                self._checkbox_column = col
+
+    def Append(self, entry):
+        &#34;&#34;&#34;
+        Adds a row to the list.
+        &#39;entry&#39; must be a list or tuple of values matching the column count.
+
+        Args:
+            entry: Sequence of row values. Checkbox columns should contain
+                truthy or falsy values; text columns are converted to strings.
+        &#34;&#34;&#34;
+        if self.use_dataview:
+            # DataViewListCtrl.AppendItem expects exactly one argument: a sequence
+            # Keep toggle columns as bool and format text columns as strings.
+            formatted_entry = [
+                bool(item) if col_idx == self._checkbox_column else str(item)
+                for col_idx, item in enumerate(entry)
+            ]
+            self.control.AppendItem(formatted_entry)
+        else:
+            # ListCtrl: Insert the first item, then set sub-items
+            index = self.control.GetItemCount()
+            if self._checkbox_column == 0:
+                self.control.InsertItem(index, &#34;&#34;)
+                self.control.CheckItem(index, bool(entry[0]))
+                text_start_col = 1
+            else:
+                self.control.InsertItem(index, str(entry[0]))
+                text_start_col = 1
+            for col_idx in range(text_start_col, len(entry)):
+                self.control.SetItem(index, col_idx, str(entry[col_idx]))
+
+    def Bind(self, event_type, handler):
+        &#34;&#34;&#34;
+        Unifies binding for common list events.
+
+        Args:
+            event_type: wx event binder or UniversalListCtrl event type.
+            handler: Callable that receives the normalized event.
+        &#34;&#34;&#34;
+        if event_type == wx.EVT_LIST_ITEM_SELECTED:
+            if self.use_dataview:
+                # Map DataView selection to List selection logic
+                self.control.Bind(dv.EVT_DATAVIEW_SELECTION_CHANGED, 
+                                  lambda evt: self._handle_selection(evt, handler))
+            else:
+                self.control.Bind(wx.EVT_LIST_ITEM_SELECTED, handler)
+        
+        elif event_type in [wx.EVT_CONTEXT_MENU, wx.EVT_CHAR_HOOK]:
+            # These are standard wx.Window events, no mapping needed
+            self.control.Bind(event_type, handler)
+
+        elif event_type == self.EVT_ITEM_CHECKED:
+            if self.use_dataview:
+                self.control.Bind(
+                    dv.EVT_DATAVIEW_ITEM_VALUE_CHANGED,
+                    lambda evt: self._handle_check(evt, handler)
+                )
+            else:
+                self.control.Bind(
+                    wx.EVT_LIST_ITEM_CHECKED,
+                    lambda evt: self._handle_check(evt, handler)
+                )
+                self.control.Bind(
+                    wx.EVT_LIST_ITEM_UNCHECKED,
+                    lambda evt: self._handle_check(evt, handler)
+                )
+        
+        else:
+            # Fallback for other events
+            self.control.Bind(event_type, handler)
+
+    def _handle_selection(self, evt, user_handler):
+        &#34;&#34;&#34;
+        Internal helper to normalize DataViewEvent so it feels 
+        closer to a ListEvent for the handler.
+
+        Args:
+            evt: Native DataView selection event.
+            user_handler: Original event handler supplied by the caller.
+        &#34;&#34;&#34;
+        # Accessibility: Ensure screen reader focus remains stable 
+        # while processing selection logic.
+        if self.use_dataview:
+            item = evt.GetItem()
+            if item.IsOk():
+                # We can inject a &#39;GetIndex&#39; method into the event object
+                # to mimic ListEvent if necessary, or just call the handler.
+                evt.GetIndex = lambda: self.control.ItemToRow(item)
+        
+        user_handler(evt)
+
+    def _handle_check(self, evt, user_handler):
+        &#34;&#34;&#34;
+        Normalize checkbox/toggle events across ListCtrl and DataViewListCtrl.
+
+        Args:
+            evt: Native checkbox or DataView value-changed event.
+            user_handler: Original event handler supplied by the caller.
+        &#34;&#34;&#34;
+        row = -1
+        checked = False
+
+        if self.use_dataview:
+            if evt.GetColumn() != self._checkbox_column:
+                evt.Skip()
+                return
+            item = evt.GetItem()
+            if item.IsOk():
+                row = self.control.ItemToRow(item)
+                checked = self.control.GetToggleValue(row, self._checkbox_column)
+        else:
+            row = evt.GetIndex()
+            checked = self.control.IsItemChecked(row)
+
+        evt.GetIndex = lambda: row
+        evt.IsChecked = lambda: checked
+        user_handler(evt)
+
+    def GetSelectedRow(self):
+        &#34;&#34;&#34;
+        Return the currently selected row index.
+
+        Returns:
+            int: Selected row index, or -1 when no row is selected.
+        &#34;&#34;&#34;
+        if self.use_dataview:
+            item = self.control.GetSelection()
+            return self.control.ItemToRow(item) if item.IsOk() else -1
+        else:
+            return self.control.GetFirstSelected()
+
+    def GetItemCount(self):
+        &#34;&#34;&#34;
+        Return the total number of items in the list.
+
+        Returns:
+            int: Number of rows in the underlying control.
+        &#34;&#34;&#34;
+        return self.control.GetItemCount()
+
+    def SelectRow(self, index):
+        &#34;&#34;&#34;
+        Selects and focuses a row by index.
+
+        Args:
+            index: Zero-based row index to select.
+        &#34;&#34;&#34;
+        if index &lt; 0 or index &gt;= self.GetItemCount():
+            return
+
+        if self.use_dataview:
+            # Try to avoid ATK noise
+            if self.control.GetColumnCount() &gt; 0:
+                item = self.control.RowToItem(index)
+                if item.IsOk():
+                    self.control.Select(item)
+                    self.control.EnsureVisible(item)
+        else:
+            self.control.Select(index)
+            self.control.Focus(index)
+
+    def SetChecked(self, index, checked):
+        &#34;&#34;&#34;
+        Set a row checkbox/toggle value without changing selection.
+
+        Args:
+            index: Zero-based row index to update.
+            checked: New checked state.
+        &#34;&#34;&#34;
+        if self._checkbox_column is None or index &lt; 0 or index &gt;= self.GetItemCount():
+            return
+
+        if self.use_dataview:
+            self.control.SetToggleValue(bool(checked), index, self._checkbox_column)
+        else:
+            self.control.CheckItem(index, bool(checked))
+
+    def IsChecked(self, index):
+        &#34;&#34;&#34;
+        Return the row checkbox/toggle state.
+
+        Args:
+            index: Zero-based row index to inspect.
+
+        Returns:
+            bool: True when the row is checked, otherwise False.
+        &#34;&#34;&#34;
+        if self._checkbox_column is None or index &lt; 0 or index &gt;= self.GetItemCount():
+            return False
+
+        if self.use_dataview:
+            return self.control.GetToggleValue(index, self._checkbox_column)
+        return self.control.IsItemChecked(index)
+
+    def GetControl(self):
+        &#34;&#34;&#34;
+        Return the wrapped wx control.
+
+        Returns:
+            wx.Window: Underlying wx.ListCtrl or DataViewListCtrl instance.
+        &#34;&#34;&#34;
+        return self.control</code></pre>
+</details>
+<div class="desc"><p>Cross-platform list wrapper with optional checkbox support.</p>
+<p>wx.ListCtrl is used on Windows, while wx.dataview.DataViewListCtrl is used
+on Linux and macOS for better accessibility. The wrapper normalizes the
+small subset of list operations used by the application.</p>
+<p>Initialize universal list control.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>parent</code></strong></dt>
+<dd>Parent wx window.</dd>
+<dt><strong><code>size</code></strong></dt>
+<dd>Initial control size.</dd>
+<dt><strong><code>style</code></strong></dt>
+<dd>wx style flags applied to the underlying list control.</dd>
+<dt><strong><code>checkboxes</code></strong></dt>
+<dd>Whether rows should support checked/unchecked state.</dd>
+<dt><strong><code>force_dataview</code></strong></dt>
+<dd>Force DataViewListCtrl even on platforms that would
+normally use wx.ListCtrl.</dd>
+</dl></div>
+<h3>Class variables</h3>
+<dl>
+<dt id="m45wxcontrols.universal_list.UniversalListCtrl.EVT_ITEM_CHECKED"><code class="name">var <span class="ident">EVT_ITEM_CHECKED</span></code></dt>
+<dd>
+<div class="desc"><p>The type of the None singleton.</p></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="m45wxcontrols.universal_list.UniversalListCtrl.Append"><code class="name flex">
+<span>def <span class="ident">Append</span></span>(<span>self, entry)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Append(self, entry):
+    &#34;&#34;&#34;
+    Adds a row to the list.
+    &#39;entry&#39; must be a list or tuple of values matching the column count.
+
+    Args:
+        entry: Sequence of row values. Checkbox columns should contain
+            truthy or falsy values; text columns are converted to strings.
+    &#34;&#34;&#34;
+    if self.use_dataview:
+        # DataViewListCtrl.AppendItem expects exactly one argument: a sequence
+        # Keep toggle columns as bool and format text columns as strings.
+        formatted_entry = [
+            bool(item) if col_idx == self._checkbox_column else str(item)
+            for col_idx, item in enumerate(entry)
+        ]
+        self.control.AppendItem(formatted_entry)
+    else:
+        # ListCtrl: Insert the first item, then set sub-items
+        index = self.control.GetItemCount()
+        if self._checkbox_column == 0:
+            self.control.InsertItem(index, &#34;&#34;)
+            self.control.CheckItem(index, bool(entry[0]))
+            text_start_col = 1
+        else:
+            self.control.InsertItem(index, str(entry[0]))
+            text_start_col = 1
+        for col_idx in range(text_start_col, len(entry)):
+            self.control.SetItem(index, col_idx, str(entry[col_idx]))</code></pre>
+</details>
+<div class="desc"><p>Adds a row to the list.
+'entry' must be a list or tuple of values matching the column count.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>entry</code></strong></dt>
+<dd>Sequence of row values. Checkbox columns should contain
+truthy or falsy values; text columns are converted to strings.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.universal_list.UniversalListCtrl.Bind"><code class="name flex">
+<span>def <span class="ident">Bind</span></span>(<span>self, event_type, handler)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Bind(self, event_type, handler):
+    &#34;&#34;&#34;
+    Unifies binding for common list events.
+
+    Args:
+        event_type: wx event binder or UniversalListCtrl event type.
+        handler: Callable that receives the normalized event.
+    &#34;&#34;&#34;
+    if event_type == wx.EVT_LIST_ITEM_SELECTED:
+        if self.use_dataview:
+            # Map DataView selection to List selection logic
+            self.control.Bind(dv.EVT_DATAVIEW_SELECTION_CHANGED, 
+                              lambda evt: self._handle_selection(evt, handler))
+        else:
+            self.control.Bind(wx.EVT_LIST_ITEM_SELECTED, handler)
+    
+    elif event_type in [wx.EVT_CONTEXT_MENU, wx.EVT_CHAR_HOOK]:
+        # These are standard wx.Window events, no mapping needed
+        self.control.Bind(event_type, handler)
+
+    elif event_type == self.EVT_ITEM_CHECKED:
+        if self.use_dataview:
+            self.control.Bind(
+                dv.EVT_DATAVIEW_ITEM_VALUE_CHANGED,
+                lambda evt: self._handle_check(evt, handler)
+            )
+        else:
+            self.control.Bind(
+                wx.EVT_LIST_ITEM_CHECKED,
+                lambda evt: self._handle_check(evt, handler)
+            )
+            self.control.Bind(
+                wx.EVT_LIST_ITEM_UNCHECKED,
+                lambda evt: self._handle_check(evt, handler)
+            )
+    
+    else:
+        # Fallback for other events
+        self.control.Bind(event_type, handler)</code></pre>
+</details>
+<div class="desc"><p>Unifies binding for common list events.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>event_type</code></strong></dt>
+<dd>wx event binder or UniversalListCtrl event type.</dd>
+<dt><strong><code>handler</code></strong></dt>
+<dd>Callable that receives the normalized event.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.universal_list.UniversalListCtrl.GetControl"><code class="name flex">
+<span>def <span class="ident">GetControl</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GetControl(self):
+    &#34;&#34;&#34;
+    Return the wrapped wx control.
+
+    Returns:
+        wx.Window: Underlying wx.ListCtrl or DataViewListCtrl instance.
+    &#34;&#34;&#34;
+    return self.control</code></pre>
+</details>
+<div class="desc"><p>Return the wrapped wx control.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>wx.Window</code></dt>
+<dd>Underlying wx.ListCtrl or DataViewListCtrl instance.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.universal_list.UniversalListCtrl.GetItemCount"><code class="name flex">
+<span>def <span class="ident">GetItemCount</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GetItemCount(self):
+    &#34;&#34;&#34;
+    Return the total number of items in the list.
+
+    Returns:
+        int: Number of rows in the underlying control.
+    &#34;&#34;&#34;
+    return self.control.GetItemCount()</code></pre>
+</details>
+<div class="desc"><p>Return the total number of items in the list.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>Number of rows in the underlying control.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.universal_list.UniversalListCtrl.GetSelectedRow"><code class="name flex">
+<span>def <span class="ident">GetSelectedRow</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GetSelectedRow(self):
+    &#34;&#34;&#34;
+    Return the currently selected row index.
+
+    Returns:
+        int: Selected row index, or -1 when no row is selected.
+    &#34;&#34;&#34;
+    if self.use_dataview:
+        item = self.control.GetSelection()
+        return self.control.ItemToRow(item) if item.IsOk() else -1
+    else:
+        return self.control.GetFirstSelected()</code></pre>
+</details>
+<div class="desc"><p>Return the currently selected row index.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>Selected row index, or -1 when no row is selected.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.universal_list.UniversalListCtrl.InsertColumn"><code class="name flex">
+<span>def <span class="ident">InsertColumn</span></span>(<span>self, col, heading, width=-1, checkbox=False)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def InsertColumn(self, col, heading, width=wx.LIST_AUTOSIZE, checkbox=False):
+    &#34;&#34;&#34;
+    Insert a column in the underlying control.
+
+    Args:
+        col: Zero-based column index.
+        heading: Text shown in the column header.
+        width: Column width or wx autosize constant.
+        checkbox: Whether this column stores checkbox/toggle values.
+    &#34;&#34;&#34;
+    if self.use_dataview:
+        if checkbox:
+            self.control.AppendToggleColumn(
+                heading,
+                mode=dv.DATAVIEW_CELL_ACTIVATABLE,
+                width=width
+            )
+            self._checkbox_column = col
+        else:
+            self.control.AppendTextColumn(heading, width=width)
+    else:
+        self.control.InsertColumn(col, heading, width=width)
+        if checkbox:
+            self._checkbox_column = col</code></pre>
+</details>
+<div class="desc"><p>Insert a column in the underlying control.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>col</code></strong></dt>
+<dd>Zero-based column index.</dd>
+<dt><strong><code>heading</code></strong></dt>
+<dd>Text shown in the column header.</dd>
+<dt><strong><code>width</code></strong></dt>
+<dd>Column width or wx autosize constant.</dd>
+<dt><strong><code>checkbox</code></strong></dt>
+<dd>Whether this column stores checkbox/toggle values.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.universal_list.UniversalListCtrl.IsChecked"><code class="name flex">
+<span>def <span class="ident">IsChecked</span></span>(<span>self, index)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def IsChecked(self, index):
+    &#34;&#34;&#34;
+    Return the row checkbox/toggle state.
+
+    Args:
+        index: Zero-based row index to inspect.
+
+    Returns:
+        bool: True when the row is checked, otherwise False.
+    &#34;&#34;&#34;
+    if self._checkbox_column is None or index &lt; 0 or index &gt;= self.GetItemCount():
+        return False
+
+    if self.use_dataview:
+        return self.control.GetToggleValue(index, self._checkbox_column)
+    return self.control.IsItemChecked(index)</code></pre>
+</details>
+<div class="desc"><p>Return the row checkbox/toggle state.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>index</code></strong></dt>
+<dd>Zero-based row index to inspect.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True when the row is checked, otherwise False.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.universal_list.UniversalListCtrl.SelectRow"><code class="name flex">
+<span>def <span class="ident">SelectRow</span></span>(<span>self, index)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def SelectRow(self, index):
+    &#34;&#34;&#34;
+    Selects and focuses a row by index.
+
+    Args:
+        index: Zero-based row index to select.
+    &#34;&#34;&#34;
+    if index &lt; 0 or index &gt;= self.GetItemCount():
+        return
+
+    if self.use_dataview:
+        # Try to avoid ATK noise
+        if self.control.GetColumnCount() &gt; 0:
+            item = self.control.RowToItem(index)
+            if item.IsOk():
+                self.control.Select(item)
+                self.control.EnsureVisible(item)
+    else:
+        self.control.Select(index)
+        self.control.Focus(index)</code></pre>
+</details>
+<div class="desc"><p>Selects and focuses a row by index.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>index</code></strong></dt>
+<dd>Zero-based row index to select.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.universal_list.UniversalListCtrl.SetChecked"><code class="name flex">
+<span>def <span class="ident">SetChecked</span></span>(<span>self, index, checked)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def SetChecked(self, index, checked):
+    &#34;&#34;&#34;
+    Set a row checkbox/toggle value without changing selection.
+
+    Args:
+        index: Zero-based row index to update.
+        checked: New checked state.
+    &#34;&#34;&#34;
+    if self._checkbox_column is None or index &lt; 0 or index &gt;= self.GetItemCount():
+        return
+
+    if self.use_dataview:
+        self.control.SetToggleValue(bool(checked), index, self._checkbox_column)
+    else:
+        self.control.CheckItem(index, bool(checked))</code></pre>
+</details>
+<div class="desc"><p>Set a row checkbox/toggle value without changing selection.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>index</code></strong></dt>
+<dd>Zero-based row index to update.</dd>
+<dt><strong><code>checked</code></strong></dt>
+<dd>New checked state.</dd>
+</dl></div>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="m45wxcontrols" href="index.html">m45wxcontrols</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="m45wxcontrols.universal_list.UniversalListCtrl" href="#m45wxcontrols.universal_list.UniversalListCtrl">UniversalListCtrl</a></code></h4>
+<ul class="two-column">
+<li><code><a title="m45wxcontrols.universal_list.UniversalListCtrl.Append" href="#m45wxcontrols.universal_list.UniversalListCtrl.Append">Append</a></code></li>
+<li><code><a title="m45wxcontrols.universal_list.UniversalListCtrl.Bind" href="#m45wxcontrols.universal_list.UniversalListCtrl.Bind">Bind</a></code></li>
+<li><code><a title="m45wxcontrols.universal_list.UniversalListCtrl.EVT_ITEM_CHECKED" href="#m45wxcontrols.universal_list.UniversalListCtrl.EVT_ITEM_CHECKED">EVT_ITEM_CHECKED</a></code></li>
+<li><code><a title="m45wxcontrols.universal_list.UniversalListCtrl.GetControl" href="#m45wxcontrols.universal_list.UniversalListCtrl.GetControl">GetControl</a></code></li>
+<li><code><a title="m45wxcontrols.universal_list.UniversalListCtrl.GetItemCount" href="#m45wxcontrols.universal_list.UniversalListCtrl.GetItemCount">GetItemCount</a></code></li>
+<li><code><a title="m45wxcontrols.universal_list.UniversalListCtrl.GetSelectedRow" href="#m45wxcontrols.universal_list.UniversalListCtrl.GetSelectedRow">GetSelectedRow</a></code></li>
+<li><code><a title="m45wxcontrols.universal_list.UniversalListCtrl.InsertColumn" href="#m45wxcontrols.universal_list.UniversalListCtrl.InsertColumn">InsertColumn</a></code></li>
+<li><code><a title="m45wxcontrols.universal_list.UniversalListCtrl.IsChecked" href="#m45wxcontrols.universal_list.UniversalListCtrl.IsChecked">IsChecked</a></code></li>
+<li><code><a title="m45wxcontrols.universal_list.UniversalListCtrl.SelectRow" href="#m45wxcontrols.universal_list.UniversalListCtrl.SelectRow">SelectRow</a></code></li>
+<li><code><a title="m45wxcontrols.universal_list.UniversalListCtrl.SetChecked" href="#m45wxcontrols.universal_list.UniversalListCtrl.SetChecked">SetChecked</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.11.6</a>.</p>
+</footer>
+</body>
+</html>
