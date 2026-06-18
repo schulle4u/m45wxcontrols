@@ -16,8 +16,7 @@ maintainers = [
   { name = "Steffen Schultz", email = "steffenschultz@mailbox.org" },
 ]
 keywords = [
-  "wxpython", "wxwidgets", "spinctrldouble", "listctrl", "dataview", "accessibility", "a11y",
-  "screen-reader",
+  "wxpython", "wxwidgets", "spinctrldouble", "listctrl", "dataview", "accessibility", "a11y", "screen-reader",
 ]
 classifiers = [
   "Programming Language :: Python :: 3",
@@ -31,7 +30,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/schulle4u/m45wxcontrols"
+Homepage = "https://m45.dev"
+Source = "https://github.com/schulle4u/m45wxcontrols"
+Issues = "https://github.com/schulle4u/m45wxcontrols/issues"
+Documentation = "https://schulle4u.github.io/m45wxcontrols/"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/m45wxcontrols"]

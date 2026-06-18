@@ -13,6 +13,8 @@ from m45wxcontrols import AccessibleSpinCtrl, CustomTextEntryDialog, UniversalLi
 
 ## Controls
 
+Below is an overview of all the control wrappers currently available. The full API documentation can be found in the 'docs' folder. 
+
 ### AccessibleSpinCtrl
 An accessible floating-point spin control composed of wx widgets. Can be used as a more accessible alternative to `wx.SpinCtrlDouble`.
 
