@@ -46,7 +46,7 @@ The following arguments are available:
 ### UniversalListCtrl
 Cross-platform list wrapper with optional checkbox support.
 
-`wx.ListCtrl` is used on Windows, while `wx.dataview.DataViewListCtrl` is used on Linux and macOS for better accessibility. The wrapper normalizes a small subset of common list operations.
+`wx.ListCtrl` is used on Windows, while `wx.dataview.DataViewListCtrl` is used on Linux and macOS for better accessibility. The wrapper normalizes list operations used by applications so callers do not need to branch on the active control type.
 
 The following arguments are available: 
 

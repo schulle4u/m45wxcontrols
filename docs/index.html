@@ -553,8 +553,9 @@ callers to provide custom OK and Cancel labels.</p>
     Cross-platform list wrapper with optional checkbox support.
 
     wx.ListCtrl is used on Windows, while wx.dataview.DataViewListCtrl is used
-    on Linux and macOS for better accessibility. The wrapper normalizes the
-    small subset of list operations used by the application.
+    on Linux and macOS for better accessibility. The wrapper normalizes list
+    operations used by applications so callers do not need to branch on the
+    active control type.
     &#34;&#34;&#34;
 
     EVT_ITEM_CHECKED = wx.NewEventType()
@@ -582,6 +583,7 @@ callers to provide custom OK and Cancel labels.</p>
         self.use_dataview = sys.platform.startswith(&#39;linux&#39;) or sys.platform == &#39;darwin&#39; or force_dataview
         self.checkboxes = checkboxes
         self._checkbox_column = None
+        self._row_data = []
 
         if self.use_dataview:
             self.control = dv.DataViewListCtrl(parent, style=style, size=size)
@@ -589,6 +591,22 @@ callers to provide custom OK and Cancel labels.</p>
             self.control = wx.ListCtrl(parent, style=style, size=size)
             if self.checkboxes:
                 self.control.EnableCheckBoxes()
+
+    def _format_row(self, entry):
+        &#34;&#34;&#34;
+        Convert row values into the representation expected by the active
+        control.
+        &#34;&#34;&#34;
+        return [
+            bool(item) if col_idx == self._checkbox_column else str(item)
+            for col_idx, item in enumerate(entry)
+        ]
+
+    def _is_valid_row(self, index):
+        &#34;&#34;&#34;
+        Return whether a row index points to an existing row.
+        &#34;&#34;&#34;
+        return 0 &lt;= index &lt; self.GetItemCount()
 
     def InsertColumn(self, col, heading, width=wx.LIST_AUTOSIZE, checkbox=False):
         &#34;&#34;&#34;
@@ -627,11 +645,7 @@ callers to provide custom OK and Cancel labels.</p>
         if self.use_dataview:
             # DataViewListCtrl.AppendItem expects exactly one argument: a sequence
             # Keep toggle columns as bool and format text columns as strings.
-            formatted_entry = [
-                bool(item) if col_idx == self._checkbox_column else str(item)
-                for col_idx, item in enumerate(entry)
-            ]
-            self.control.AppendItem(formatted_entry)
+            self.control.AppendItem(self._format_row(entry))
         else:
             # ListCtrl: Insert the first item, then set sub-items
             index = self.control.GetItemCount()
@@ -645,6 +659,180 @@ callers to provide custom OK and Cancel labels.</p>
             for col_idx in range(text_start_col, len(entry)):
                 self.control.SetItem(index, col_idx, str(entry[col_idx]))
 
+        self._row_data.append(None)
+
+    def AppendRow(self, entry, data=None):
+        &#34;&#34;&#34;
+        Append a row and optionally attach application data to it.
+
+        Args:
+            entry: Sequence of row values.
+            data: Optional application-specific object associated with the row.
+        &#34;&#34;&#34;
+        self.Append(entry)
+        self.SetRowData(self.GetItemCount() - 1, data)
+
+    def InsertRow(self, index, entry, data=None):
+        &#34;&#34;&#34;
+        Insert a row at a specific index.
+
+        Args:
+            index: Zero-based insertion index. Values outside the list are
+                clamped to the beginning or end.
+            entry: Sequence of row values.
+            data: Optional application-specific object associated with the row.
+        &#34;&#34;&#34;
+        index = max(0, min(index, self.GetItemCount()))
+
+        if self.use_dataview:
+            self.control.InsertItem(index, self._format_row(entry))
+        else:
+            if self._checkbox_column == 0:
+                self.control.InsertItem(index, &#34;&#34;)
+                self.control.CheckItem(index, bool(entry[0]))
+                text_start_col = 1
+            else:
+                self.control.InsertItem(index, str(entry[0]))
+                text_start_col = 1
+            for col_idx in range(text_start_col, len(entry)):
+                self.control.SetItem(index, col_idx, str(entry[col_idx]))
+
+        self._row_data.insert(index, data)
+
+    def DeleteRow(self, index):
+        &#34;&#34;&#34;
+        Delete a row by index.
+
+        Args:
+            index: Zero-based row index to delete.
+
+        Returns:
+            bool: True when a row was deleted, otherwise False.
+        &#34;&#34;&#34;
+        if not self._is_valid_row(index):
+            return False
+
+        self.control.DeleteItem(index)
+        if index &lt; len(self._row_data):
+            del self._row_data[index]
+        return True
+
+    def DeleteAllItems(self):
+        &#34;&#34;&#34;
+        Delete all rows from the list.
+        &#34;&#34;&#34;
+        self.control.DeleteAllItems()
+        self._row_data.clear()
+
+    def Clear(self):
+        &#34;&#34;&#34;
+        Delete all rows from the list.
+        &#34;&#34;&#34;
+        self.DeleteAllItems()
+
+    def GetItemText(self, row, col=0):
+        &#34;&#34;&#34;
+        Return the text shown in a cell.
+
+        Args:
+            row: Zero-based row index.
+            col: Zero-based column index.
+
+        Returns:
+            str: Cell text, or an empty string for invalid rows.
+        &#34;&#34;&#34;
+        if not self._is_valid_row(row):
+            return &#34;&#34;
+
+        if self.use_dataview:
+            if col == self._checkbox_column:
+                return str(self.control.GetToggleValue(row, col))
+            return self.control.GetTextValue(row, col)
+        return self.control.GetItemText(row, col)
+
+    def SetItemText(self, row, col, text):
+        &#34;&#34;&#34;
+        Set the text/value shown in a cell.
+
+        Args:
+            row: Zero-based row index.
+            col: Zero-based column index.
+            text: New cell value. Checkbox columns interpret this as bool.
+        &#34;&#34;&#34;
+        if not self._is_valid_row(row):
+            return
+
+        if col == self._checkbox_column:
+            self.SetChecked(row, bool(text))
+        elif self.use_dataview:
+            self.control.SetTextValue(str(text), row, col)
+        else:
+            self.control.SetItem(row, col, str(text))
+
+    def GetRow(self, row):
+        &#34;&#34;&#34;
+        Return all cell values for a row.
+
+        Args:
+            row: Zero-based row index.
+
+        Returns:
+            list: Row values. Checkbox columns are returned as bool values.
+        &#34;&#34;&#34;
+        if not self._is_valid_row(row):
+            return []
+
+        values = []
+        for col in range(self.GetColumnCount()):
+            if col == self._checkbox_column:
+                values.append(self.IsChecked(row))
+            else:
+                values.append(self.GetItemText(row, col))
+        return values
+
+    def SetRow(self, row, values):
+        &#34;&#34;&#34;
+        Replace the visible values in an existing row.
+
+        Args:
+            row: Zero-based row index.
+            values: Sequence of new row values.
+        &#34;&#34;&#34;
+        if not self._is_valid_row(row):
+            return
+
+        for col, value in enumerate(values):
+            self.SetItemText(row, col, value)
+
+    def SetRowData(self, row, data):
+        &#34;&#34;&#34;
+        Associate arbitrary application data with a row.
+
+        Args:
+            row: Zero-based row index.
+            data: Application-specific object to store.
+        &#34;&#34;&#34;
+        if not self._is_valid_row(row):
+            return
+
+        while len(self._row_data) &lt; self.GetItemCount():
+            self._row_data.append(None)
+        self._row_data[row] = data
+
+    def GetRowData(self, row):
+        &#34;&#34;&#34;
+        Return application data associated with a row.
+
+        Args:
+            row: Zero-based row index.
+
+        Returns:
+            object: Stored row data, or None when no data is stored.
+        &#34;&#34;&#34;
+        if not self._is_valid_row(row) or row &gt;= len(self._row_data):
+            return None
+        return self._row_data[row]
+
     def Bind(self, event_type, handler):
         &#34;&#34;&#34;
         Unifies binding for common list events.
@@ -656,11 +844,11 @@ callers to provide custom OK and Cancel labels.</p>
         if event_type == wx.EVT_LIST_ITEM_SELECTED:
             if self.use_dataview:
                 # Map DataView selection to List selection logic
-                self.control.Bind(dv.EVT_DATAVIEW_SELECTION_CHANGED, 
+                self.control.Bind(dv.EVT_DATAVIEW_SELECTION_CHANGED,
                                   lambda evt: self._handle_selection(evt, handler))
             else:
                 self.control.Bind(wx.EVT_LIST_ITEM_SELECTED, handler)
-        
+
         elif event_type in [wx.EVT_CONTEXT_MENU, wx.EVT_CHAR_HOOK]:
             # These are standard wx.Window events, no mapping needed
             self.control.Bind(event_type, handler)
@@ -680,21 +868,21 @@ callers to provide custom OK and Cancel labels.</p>
                     wx.EVT_LIST_ITEM_UNCHECKED,
                     lambda evt: self._handle_check(evt, handler)
                 )
-        
+
         else:
             # Fallback for other events
             self.control.Bind(event_type, handler)
 
     def _handle_selection(self, evt, user_handler):
         &#34;&#34;&#34;
-        Internal helper to normalize DataViewEvent so it feels 
+        Internal helper to normalize DataViewEvent so it feels
         closer to a ListEvent for the handler.
 
         Args:
             evt: Native DataView selection event.
             user_handler: Original event handler supplied by the caller.
         &#34;&#34;&#34;
-        # Accessibility: Ensure screen reader focus remains stable 
+        # Accessibility: Ensure screen reader focus remains stable
         # while processing selection logic.
         if self.use_dataview:
             item = evt.GetItem()
@@ -702,7 +890,7 @@ callers to provide custom OK and Cancel labels.</p>
                 # We can inject a &#39;GetIndex&#39; method into the event object
                 # to mimic ListEvent if necessary, or just call the handler.
                 evt.GetIndex = lambda: self.control.ItemToRow(item)
-        
+
         user_handler(evt)
 
     def _handle_check(self, evt, user_handler):
@@ -745,6 +933,40 @@ callers to provide custom OK and Cancel labels.</p>
         else:
             return self.control.GetFirstSelected()
 
+    def GetSelectedRows(self):
+        &#34;&#34;&#34;
+        Return all selected row indices.
+
+        Returns:
+            list[int]: Selected row indices.
+        &#34;&#34;&#34;
+        if self.use_dataview:
+            selections = self.control.GetSelections()
+            return [
+                self.control.ItemToRow(item)
+                for item in selections
+                if item.IsOk()
+            ]
+
+        rows = []
+        row = self.control.GetFirstSelected()
+        while row != -1:
+            rows.append(row)
+            row = self.control.GetNextSelected(row)
+        return rows
+
+    def IsSelected(self, index):
+        &#34;&#34;&#34;
+        Return whether a row is currently selected.
+        &#34;&#34;&#34;
+        if not self._is_valid_row(index):
+            return False
+
+        if self.use_dataview:
+            item = self.control.RowToItem(index)
+            return item.IsOk() and self.control.IsSelected(item)
+        return self.control.GetItemState(index, wx.LIST_STATE_SELECTED) != 0
+
     def GetItemCount(self):
         &#34;&#34;&#34;
         Return the total number of items in the list.
@@ -774,6 +996,136 @@ callers to provide custom OK and Cancel labels.</p>
         else:
             self.control.Select(index)
             self.control.Focus(index)
+
+    def SelectRows(self, indices):
+        &#34;&#34;&#34;
+        Select multiple rows.
+
+        Args:
+            indices: Iterable of zero-based row indices.
+        &#34;&#34;&#34;
+        self.ClearSelection()
+        for index in indices:
+            if not self._is_valid_row(index):
+                continue
+            if self.use_dataview:
+                item = self.control.RowToItem(index)
+                if item.IsOk():
+                    self.control.Select(item)
+            else:
+                self.control.Select(index)
+
+    def ClearSelection(self):
+        &#34;&#34;&#34;
+        Clear the current row selection.
+        &#34;&#34;&#34;
+        if self.use_dataview:
+            self.control.UnselectAll()
+        else:
+            for index in self.GetSelectedRows():
+                self.control.Select(index, False)
+
+    def FocusRow(self, index):
+        &#34;&#34;&#34;
+        Move keyboard focus to a row without changing its checked state.
+        &#34;&#34;&#34;
+        if not self._is_valid_row(index):
+            return
+
+        if self.use_dataview:
+            item = self.control.RowToItem(index)
+            if item.IsOk():
+                self.control.SetCurrentItem(item)
+                self.control.EnsureVisible(item)
+        else:
+            self.control.Focus(index)
+
+    def EnsureVisible(self, index):
+        &#34;&#34;&#34;
+        Scroll a row into view.
+        &#34;&#34;&#34;
+        if not self._is_valid_row(index):
+            return
+
+        if self.use_dataview:
+            item = self.control.RowToItem(index)
+            if item.IsOk():
+                self.control.EnsureVisible(item)
+        else:
+            self.control.EnsureVisible(index)
+
+    def GetFocusedRow(self):
+        &#34;&#34;&#34;
+        Return the row that currently has keyboard focus.
+
+        Returns:
+            int: Focused row index, or -1 when no row has focus.
+        &#34;&#34;&#34;
+        if self.use_dataview:
+            item = self.control.GetCurrentItem()
+            return self.control.ItemToRow(item) if item.IsOk() else -1
+        return self.control.GetFocusedItem()
+
+    def GetColumnCount(self):
+        &#34;&#34;&#34;
+        Return the number of columns.
+        &#34;&#34;&#34;
+        return self.control.GetColumnCount()
+
+    def SetColumnWidth(self, col, width):
+        &#34;&#34;&#34;
+        Set the width of a column.
+        &#34;&#34;&#34;
+        if col &lt; 0 or col &gt;= self.GetColumnCount():
+            return
+
+        if self.use_dataview:
+            self.control.GetColumn(col).SetWidth(width)
+        else:
+            self.control.SetColumnWidth(col, width)
+
+    def GetColumnWidth(self, col):
+        &#34;&#34;&#34;
+        Return the width of a column.
+        &#34;&#34;&#34;
+        if col &lt; 0 or col &gt;= self.GetColumnCount():
+            return 0
+
+        if self.use_dataview:
+            return self.control.GetColumn(col).GetWidth()
+        return self.control.GetColumnWidth(col)
+
+    def AutosizeColumn(self, col):
+        &#34;&#34;&#34;
+        Resize a column to fit its content.
+        &#34;&#34;&#34;
+        if col &lt; 0 or col &gt;= self.GetColumnCount():
+            return
+
+        self.SetColumnWidth(col, wx.LIST_AUTOSIZE)
+
+    def Freeze(self):
+        &#34;&#34;&#34;
+        Freeze visual updates for batch changes.
+        &#34;&#34;&#34;
+        self.control.Freeze()
+
+    def Thaw(self):
+        &#34;&#34;&#34;
+        Resume visual updates after batch changes.
+        &#34;&#34;&#34;
+        self.control.Thaw()
+
+    @contextmanager
+    def batch_update(self):
+        &#34;&#34;&#34;
+        Context manager that freezes the control during multiple updates.
+        &#34;&#34;&#34;
+        self.Freeze()
+        try:
+            yield self
+        finally:
+            self.Thaw()
 
     def SetChecked(self, index, checked):
         &#34;&#34;&#34;
@@ -819,8 +1171,9 @@ callers to provide custom OK and Cancel labels.</p>
 </details>
 <div class="desc"><p>Cross-platform list wrapper with optional checkbox support.</p>
 <p>wx.ListCtrl is used on Windows, while wx.dataview.DataViewListCtrl is used
-on Linux and macOS for better accessibility. The wrapper normalizes the
-small subset of list operations used by the application.</p>
+on Linux and macOS for better accessibility. The wrapper normalizes list
+operations used by applications so callers do not need to branch on the
+active control type.</p>
 <p>Initialize universal list control.</p>
 <h2 id="args">Args</h2>
 <dl>
@@ -865,11 +1218,7 @@ normally use wx.ListCtrl.</dd>
     if self.use_dataview:
         # DataViewListCtrl.AppendItem expects exactly one argument: a sequence
         # Keep toggle columns as bool and format text columns as strings.
-        formatted_entry = [
-            bool(item) if col_idx == self._checkbox_column else str(item)
-            for col_idx, item in enumerate(entry)
-        ]
-        self.control.AppendItem(formatted_entry)
+        self.control.AppendItem(self._format_row(entry))
     else:
         # ListCtrl: Insert the first item, then set sub-items
         index = self.control.GetItemCount()
@@ -881,7 +1230,9 @@ normally use wx.ListCtrl.</dd>
             self.control.InsertItem(index, str(entry[0]))
             text_start_col = 1
         for col_idx in range(text_start_col, len(entry)):
-            self.control.SetItem(index, col_idx, str(entry[col_idx]))</code></pre>
+            self.control.SetItem(index, col_idx, str(entry[col_idx]))
+
+    self._row_data.append(None)</code></pre>
 </details>
 <div class="desc"><p>Adds a row to the list.
 'entry' must be a list or tuple of values matching the column count.</p>
@@ -891,6 +1242,53 @@ normally use wx.ListCtrl.</dd>
 <dd>Sequence of row values. Checkbox columns should contain
 truthy or falsy values; text columns are converted to strings.</dd>
 </dl></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.AppendRow"><code class="name flex">
+<span>def <span class="ident">AppendRow</span></span>(<span>self, entry, data=None)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def AppendRow(self, entry, data=None):
+    &#34;&#34;&#34;
+    Append a row and optionally attach application data to it.
+
+    Args:
+        entry: Sequence of row values.
+        data: Optional application-specific object associated with the row.
+    &#34;&#34;&#34;
+    self.Append(entry)
+    self.SetRowData(self.GetItemCount() - 1, data)</code></pre>
+</details>
+<div class="desc"><p>Append a row and optionally attach application data to it.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>entry</code></strong></dt>
+<dd>Sequence of row values.</dd>
+<dt><strong><code>data</code></strong></dt>
+<dd>Optional application-specific object associated with the row.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.AutosizeColumn"><code class="name flex">
+<span>def <span class="ident">AutosizeColumn</span></span>(<span>self, col)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def AutosizeColumn(self, col):
+    &#34;&#34;&#34;
+    Resize a column to fit its content.
+    &#34;&#34;&#34;
+    if col &lt; 0 or col &gt;= self.GetColumnCount():
+        return
+
+    self.SetColumnWidth(col, wx.LIST_AUTOSIZE)</code></pre>
+</details>
+<div class="desc"><p>Resize a column to fit its content.</p></div>
 </dd>
 <dt id="m45wxcontrols.UniversalListCtrl.Bind"><code class="name flex">
 <span>def <span class="ident">Bind</span></span>(<span>self, event_type, handler)</span>
@@ -911,11 +1309,11 @@ truthy or falsy values; text columns are converted to strings.</dd>
     if event_type == wx.EVT_LIST_ITEM_SELECTED:
         if self.use_dataview:
             # Map DataView selection to List selection logic
-            self.control.Bind(dv.EVT_DATAVIEW_SELECTION_CHANGED, 
+            self.control.Bind(dv.EVT_DATAVIEW_SELECTION_CHANGED,
                               lambda evt: self._handle_selection(evt, handler))
         else:
             self.control.Bind(wx.EVT_LIST_ITEM_SELECTED, handler)
-    
+
     elif event_type in [wx.EVT_CONTEXT_MENU, wx.EVT_CHAR_HOOK]:
         # These are standard wx.Window events, no mapping needed
         self.control.Bind(event_type, handler)
@@ -935,7 +1333,7 @@ truthy or falsy values; text columns are converted to strings.</dd>
                 wx.EVT_LIST_ITEM_UNCHECKED,
                 lambda evt: self._handle_check(evt, handler)
             )
-    
+
     else:
         # Fallback for other events
         self.control.Bind(event_type, handler)</code></pre>
@@ -948,6 +1346,199 @@ truthy or falsy values; text columns are converted to strings.</dd>
 <dt><strong><code>handler</code></strong></dt>
 <dd>Callable that receives the normalized event.</dd>
 </dl></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.Clear"><code class="name flex">
+<span>def <span class="ident">Clear</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Clear(self):
+    &#34;&#34;&#34;
+    Delete all rows from the list.
+    &#34;&#34;&#34;
+    self.DeleteAllItems()</code></pre>
+</details>
+<div class="desc"><p>Delete all rows from the list.</p></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.ClearSelection"><code class="name flex">
+<span>def <span class="ident">ClearSelection</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def ClearSelection(self):
+    &#34;&#34;&#34;
+    Clear the current row selection.
+    &#34;&#34;&#34;
+    if self.use_dataview:
+        self.control.UnselectAll()
+    else:
+        for index in self.GetSelectedRows():
+            self.control.Select(index, False)</code></pre>
+</details>
+<div class="desc"><p>Clear the current row selection.</p></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.DeleteAllItems"><code class="name flex">
+<span>def <span class="ident">DeleteAllItems</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def DeleteAllItems(self):
+    &#34;&#34;&#34;
+    Delete all rows from the list.
+    &#34;&#34;&#34;
+    self.control.DeleteAllItems()
+    self._row_data.clear()</code></pre>
+</details>
+<div class="desc"><p>Delete all rows from the list.</p></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.DeleteRow"><code class="name flex">
+<span>def <span class="ident">DeleteRow</span></span>(<span>self, index)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def DeleteRow(self, index):
+    &#34;&#34;&#34;
+    Delete a row by index.
+
+    Args:
+        index: Zero-based row index to delete.
+
+    Returns:
+        bool: True when a row was deleted, otherwise False.
+    &#34;&#34;&#34;
+    if not self._is_valid_row(index):
+        return False
+
+    self.control.DeleteItem(index)
+    if index &lt; len(self._row_data):
+        del self._row_data[index]
+    return True</code></pre>
+</details>
+<div class="desc"><p>Delete a row by index.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>index</code></strong></dt>
+<dd>Zero-based row index to delete.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True when a row was deleted, otherwise False.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.EnsureVisible"><code class="name flex">
+<span>def <span class="ident">EnsureVisible</span></span>(<span>self, index)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def EnsureVisible(self, index):
+    &#34;&#34;&#34;
+    Scroll a row into view.
+    &#34;&#34;&#34;
+    if not self._is_valid_row(index):
+        return
+
+    if self.use_dataview:
+        item = self.control.RowToItem(index)
+        if item.IsOk():
+            self.control.EnsureVisible(item)
+    else:
+        self.control.EnsureVisible(index)</code></pre>
+</details>
+<div class="desc"><p>Scroll a row into view.</p></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.FocusRow"><code class="name flex">
+<span>def <span class="ident">FocusRow</span></span>(<span>self, index)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def FocusRow(self, index):
+    &#34;&#34;&#34;
+    Move keyboard focus to a row without changing its checked state.
+    &#34;&#34;&#34;
+    if not self._is_valid_row(index):
+        return
+
+    if self.use_dataview:
+        item = self.control.RowToItem(index)
+        if item.IsOk():
+            self.control.SetCurrentItem(item)
+            self.control.EnsureVisible(item)
+    else:
+        self.control.Focus(index)</code></pre>
+</details>
+<div class="desc"><p>Move keyboard focus to a row without changing its checked state.</p></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.Freeze"><code class="name flex">
+<span>def <span class="ident">Freeze</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Freeze(self):
+    &#34;&#34;&#34;
+    Freeze visual updates for batch changes.
+    &#34;&#34;&#34;
+    self.control.Freeze()</code></pre>
+</details>
+<div class="desc"><p>Freeze visual updates for batch changes.</p></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.GetColumnCount"><code class="name flex">
+<span>def <span class="ident">GetColumnCount</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GetColumnCount(self):
+    &#34;&#34;&#34;
+    Return the number of columns.
+    &#34;&#34;&#34;
+    return self.control.GetColumnCount()</code></pre>
+</details>
+<div class="desc"><p>Return the number of columns.</p></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.GetColumnWidth"><code class="name flex">
+<span>def <span class="ident">GetColumnWidth</span></span>(<span>self, col)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GetColumnWidth(self, col):
+    &#34;&#34;&#34;
+    Return the width of a column.
+    &#34;&#34;&#34;
+    if col &lt; 0 or col &gt;= self.GetColumnCount():
+        return 0
+
+    if self.use_dataview:
+        return self.control.GetColumn(col).GetWidth()
+    return self.control.GetColumnWidth(col)</code></pre>
+</details>
+<div class="desc"><p>Return the width of a column.</p></div>
 </dd>
 <dt id="m45wxcontrols.UniversalListCtrl.GetControl"><code class="name flex">
 <span>def <span class="ident">GetControl</span></span>(<span>self)</span>
@@ -973,6 +1564,33 @@ truthy or falsy values; text columns are converted to strings.</dd>
 <dd>Underlying wx.ListCtrl or DataViewListCtrl instance.</dd>
 </dl></div>
 </dd>
+<dt id="m45wxcontrols.UniversalListCtrl.GetFocusedRow"><code class="name flex">
+<span>def <span class="ident">GetFocusedRow</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GetFocusedRow(self):
+    &#34;&#34;&#34;
+    Return the row that currently has keyboard focus.
+
+    Returns:
+        int: Focused row index, or -1 when no row has focus.
+    &#34;&#34;&#34;
+    if self.use_dataview:
+        item = self.control.GetCurrentItem()
+        return self.control.ItemToRow(item) if item.IsOk() else -1
+    return self.control.GetFocusedItem()</code></pre>
+</details>
+<div class="desc"><p>Return the row that currently has keyboard focus.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>Focused row index, or -1 when no row has focus.</dd>
+</dl></div>
+</dd>
 <dt id="m45wxcontrols.UniversalListCtrl.GetItemCount"><code class="name flex">
 <span>def <span class="ident">GetItemCount</span></span>(<span>self)</span>
 </code></dt>
@@ -995,6 +1613,123 @@ truthy or falsy values; text columns are converted to strings.</dd>
 <dl>
 <dt><code>int</code></dt>
 <dd>Number of rows in the underlying control.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.GetItemText"><code class="name flex">
+<span>def <span class="ident">GetItemText</span></span>(<span>self, row, col=0)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GetItemText(self, row, col=0):
+    &#34;&#34;&#34;
+    Return the text shown in a cell.
+
+    Args:
+        row: Zero-based row index.
+        col: Zero-based column index.
+
+    Returns:
+        str: Cell text, or an empty string for invalid rows.
+    &#34;&#34;&#34;
+    if not self._is_valid_row(row):
+        return &#34;&#34;
+
+    if self.use_dataview:
+        if col == self._checkbox_column:
+            return str(self.control.GetToggleValue(row, col))
+        return self.control.GetTextValue(row, col)
+    return self.control.GetItemText(row, col)</code></pre>
+</details>
+<div class="desc"><p>Return the text shown in a cell.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>row</code></strong></dt>
+<dd>Zero-based row index.</dd>
+<dt><strong><code>col</code></strong></dt>
+<dd>Zero-based column index.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>str</code></dt>
+<dd>Cell text, or an empty string for invalid rows.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.GetRow"><code class="name flex">
+<span>def <span class="ident">GetRow</span></span>(<span>self, row)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GetRow(self, row):
+    &#34;&#34;&#34;
+    Return all cell values for a row.
+
+    Args:
+        row: Zero-based row index.
+
+    Returns:
+        list: Row values. Checkbox columns are returned as bool values.
+    &#34;&#34;&#34;
+    if not self._is_valid_row(row):
+        return []
+
+    values = []
+    for col in range(self.GetColumnCount()):
+        if col == self._checkbox_column:
+            values.append(self.IsChecked(row))
+        else:
+            values.append(self.GetItemText(row, col))
+    return values</code></pre>
+</details>
+<div class="desc"><p>Return all cell values for a row.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>row</code></strong></dt>
+<dd>Zero-based row index.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>Row values. Checkbox columns are returned as bool values.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.GetRowData"><code class="name flex">
+<span>def <span class="ident">GetRowData</span></span>(<span>self, row)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GetRowData(self, row):
+    &#34;&#34;&#34;
+    Return application data associated with a row.
+
+    Args:
+        row: Zero-based row index.
+
+    Returns:
+        object: Stored row data, or None when no data is stored.
+    &#34;&#34;&#34;
+    if not self._is_valid_row(row) or row &gt;= len(self._row_data):
+        return None
+    return self._row_data[row]</code></pre>
+</details>
+<div class="desc"><p>Return application data associated with a row.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>row</code></strong></dt>
+<dd>Zero-based row index.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>object</code></dt>
+<dd>Stored row data, or None when no data is stored.</dd>
 </dl></div>
 </dd>
 <dt id="m45wxcontrols.UniversalListCtrl.GetSelectedRow"><code class="name flex">
@@ -1023,6 +1758,43 @@ truthy or falsy values; text columns are converted to strings.</dd>
 <dl>
 <dt><code>int</code></dt>
 <dd>Selected row index, or -1 when no row is selected.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.GetSelectedRows"><code class="name flex">
+<span>def <span class="ident">GetSelectedRows</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GetSelectedRows(self):
+    &#34;&#34;&#34;
+    Return all selected row indices.
+
+    Returns:
+        list[int]: Selected row indices.
+    &#34;&#34;&#34;
+    if self.use_dataview:
+        selections = self.control.GetSelections()
+        return [
+            self.control.ItemToRow(item)
+            for item in selections
+            if item.IsOk()
+        ]
+
+    rows = []
+    row = self.control.GetFirstSelected()
+    while row != -1:
+        rows.append(row)
+        row = self.control.GetNextSelected(row)
+    return rows</code></pre>
+</details>
+<div class="desc"><p>Return all selected row indices.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list[int]</code></dt>
+<dd>Selected row indices.</dd>
 </dl></div>
 </dd>
 <dt id="m45wxcontrols.UniversalListCtrl.InsertColumn"><code class="name flex">
@@ -1071,6 +1843,53 @@ truthy or falsy values; text columns are converted to strings.</dd>
 <dd>Whether this column stores checkbox/toggle values.</dd>
 </dl></div>
 </dd>
+<dt id="m45wxcontrols.UniversalListCtrl.InsertRow"><code class="name flex">
+<span>def <span class="ident">InsertRow</span></span>(<span>self, index, entry, data=None)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def InsertRow(self, index, entry, data=None):
+    &#34;&#34;&#34;
+    Insert a row at a specific index.
+
+    Args:
+        index: Zero-based insertion index. Values outside the list are
+            clamped to the beginning or end.
+        entry: Sequence of row values.
+        data: Optional application-specific object associated with the row.
+    &#34;&#34;&#34;
+    index = max(0, min(index, self.GetItemCount()))
+
+    if self.use_dataview:
+        self.control.InsertItem(index, self._format_row(entry))
+    else:
+        if self._checkbox_column == 0:
+            self.control.InsertItem(index, &#34;&#34;)
+            self.control.CheckItem(index, bool(entry[0]))
+            text_start_col = 1
+        else:
+            self.control.InsertItem(index, str(entry[0]))
+            text_start_col = 1
+        for col_idx in range(text_start_col, len(entry)):
+            self.control.SetItem(index, col_idx, str(entry[col_idx]))
+
+    self._row_data.insert(index, data)</code></pre>
+</details>
+<div class="desc"><p>Insert a row at a specific index.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>index</code></strong></dt>
+<dd>Zero-based insertion index. Values outside the list are
+clamped to the beginning or end.</dd>
+<dt><strong><code>entry</code></strong></dt>
+<dd>Sequence of row values.</dd>
+<dt><strong><code>data</code></strong></dt>
+<dd>Optional application-specific object associated with the row.</dd>
+</dl></div>
+</dd>
 <dt id="m45wxcontrols.UniversalListCtrl.IsChecked"><code class="name flex">
 <span>def <span class="ident">IsChecked</span></span>(<span>self, index)</span>
 </code></dt>
@@ -1108,6 +1927,28 @@ truthy or falsy values; text columns are converted to strings.</dd>
 <dd>True when the row is checked, otherwise False.</dd>
 </dl></div>
 </dd>
+<dt id="m45wxcontrols.UniversalListCtrl.IsSelected"><code class="name flex">
+<span>def <span class="ident">IsSelected</span></span>(<span>self, index)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def IsSelected(self, index):
+    &#34;&#34;&#34;
+    Return whether a row is currently selected.
+    &#34;&#34;&#34;
+    if not self._is_valid_row(index):
+        return False
+
+    if self.use_dataview:
+        item = self.control.RowToItem(index)
+        return item.IsOk() and self.control.IsSelected(item)
+    return self.control.GetItemState(index, wx.LIST_STATE_SELECTED) != 0</code></pre>
+</details>
+<div class="desc"><p>Return whether a row is currently selected.</p></div>
+</dd>
 <dt id="m45wxcontrols.UniversalListCtrl.SelectRow"><code class="name flex">
 <span>def <span class="ident">SelectRow</span></span>(<span>self, index)</span>
 </code></dt>
@@ -1144,6 +1985,39 @@ truthy or falsy values; text columns are converted to strings.</dd>
 <dd>Zero-based row index to select.</dd>
 </dl></div>
 </dd>
+<dt id="m45wxcontrols.UniversalListCtrl.SelectRows"><code class="name flex">
+<span>def <span class="ident">SelectRows</span></span>(<span>self, indices)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def SelectRows(self, indices):
+    &#34;&#34;&#34;
+    Select multiple rows.
+
+    Args:
+        indices: Iterable of zero-based row indices.
+    &#34;&#34;&#34;
+    self.ClearSelection()
+    for index in indices:
+        if not self._is_valid_row(index):
+            continue
+        if self.use_dataview:
+            item = self.control.RowToItem(index)
+            if item.IsOk():
+                self.control.Select(item)
+        else:
+            self.control.Select(index)</code></pre>
+</details>
+<div class="desc"><p>Select multiple rows.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>indices</code></strong></dt>
+<dd>Iterable of zero-based row indices.</dd>
+</dl></div>
+</dd>
 <dt id="m45wxcontrols.UniversalListCtrl.SetChecked"><code class="name flex">
 <span>def <span class="ident">SetChecked</span></span>(<span>self, index, checked)</span>
 </code></dt>
@@ -1176,6 +2050,166 @@ truthy or falsy values; text columns are converted to strings.</dd>
 <dt><strong><code>checked</code></strong></dt>
 <dd>New checked state.</dd>
 </dl></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.SetColumnWidth"><code class="name flex">
+<span>def <span class="ident">SetColumnWidth</span></span>(<span>self, col, width)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def SetColumnWidth(self, col, width):
+    &#34;&#34;&#34;
+    Set the width of a column.
+    &#34;&#34;&#34;
+    if col &lt; 0 or col &gt;= self.GetColumnCount():
+        return
+
+    if self.use_dataview:
+        self.control.GetColumn(col).SetWidth(width)
+    else:
+        self.control.SetColumnWidth(col, width)</code></pre>
+</details>
+<div class="desc"><p>Set the width of a column.</p></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.SetItemText"><code class="name flex">
+<span>def <span class="ident">SetItemText</span></span>(<span>self, row, col, text)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def SetItemText(self, row, col, text):
+    &#34;&#34;&#34;
+    Set the text/value shown in a cell.
+
+    Args:
+        row: Zero-based row index.
+        col: Zero-based column index.
+        text: New cell value. Checkbox columns interpret this as bool.
+    &#34;&#34;&#34;
+    if not self._is_valid_row(row):
+        return
+
+    if col == self._checkbox_column:
+        self.SetChecked(row, bool(text))
+    elif self.use_dataview:
+        self.control.SetTextValue(str(text), row, col)
+    else:
+        self.control.SetItem(row, col, str(text))</code></pre>
+</details>
+<div class="desc"><p>Set the text/value shown in a cell.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>row</code></strong></dt>
+<dd>Zero-based row index.</dd>
+<dt><strong><code>col</code></strong></dt>
+<dd>Zero-based column index.</dd>
+<dt><strong><code>text</code></strong></dt>
+<dd>New cell value. Checkbox columns interpret this as bool.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.SetRow"><code class="name flex">
+<span>def <span class="ident">SetRow</span></span>(<span>self, row, values)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def SetRow(self, row, values):
+    &#34;&#34;&#34;
+    Replace the visible values in an existing row.
+
+    Args:
+        row: Zero-based row index.
+        values: Sequence of new row values.
+    &#34;&#34;&#34;
+    if not self._is_valid_row(row):
+        return
+
+    for col, value in enumerate(values):
+        self.SetItemText(row, col, value)</code></pre>
+</details>
+<div class="desc"><p>Replace the visible values in an existing row.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>row</code></strong></dt>
+<dd>Zero-based row index.</dd>
+<dt><strong><code>values</code></strong></dt>
+<dd>Sequence of new row values.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.SetRowData"><code class="name flex">
+<span>def <span class="ident">SetRowData</span></span>(<span>self, row, data)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def SetRowData(self, row, data):
+    &#34;&#34;&#34;
+    Associate arbitrary application data with a row.
+
+    Args:
+        row: Zero-based row index.
+        data: Application-specific object to store.
+    &#34;&#34;&#34;
+    if not self._is_valid_row(row):
+        return
+
+    while len(self._row_data) &lt; self.GetItemCount():
+        self._row_data.append(None)
+    self._row_data[row] = data</code></pre>
+</details>
+<div class="desc"><p>Associate arbitrary application data with a row.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>row</code></strong></dt>
+<dd>Zero-based row index.</dd>
+<dt><strong><code>data</code></strong></dt>
+<dd>Application-specific object to store.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.Thaw"><code class="name flex">
+<span>def <span class="ident">Thaw</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Thaw(self):
+    &#34;&#34;&#34;
+    Resume visual updates after batch changes.
+    &#34;&#34;&#34;
+    self.control.Thaw()</code></pre>
+</details>
+<div class="desc"><p>Resume visual updates after batch changes.</p></div>
+</dd>
+<dt id="m45wxcontrols.UniversalListCtrl.batch_update"><code class="name flex">
+<span>def <span class="ident">batch_update</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@contextmanager
+def batch_update(self):
+    &#34;&#34;&#34;
+    Context manager that freezes the control during multiple updates.
+    &#34;&#34;&#34;
+    self.Freeze()
+    try:
+        yield self
+    finally:
+        self.Thaw()</code></pre>
+</details>
+<div class="desc"><p>Context manager that freezes the control during multiple updates.</p></div>
 </dd>
 </dl>
 </dd>
@@ -1216,15 +2250,40 @@ truthy or falsy values; text columns are converted to strings.</dd>
 <h4><code><a title="m45wxcontrols.UniversalListCtrl" href="#m45wxcontrols.UniversalListCtrl">UniversalListCtrl</a></code></h4>
 <ul class="two-column">
 <li><code><a title="m45wxcontrols.UniversalListCtrl.Append" href="#m45wxcontrols.UniversalListCtrl.Append">Append</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.AppendRow" href="#m45wxcontrols.UniversalListCtrl.AppendRow">AppendRow</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.AutosizeColumn" href="#m45wxcontrols.UniversalListCtrl.AutosizeColumn">AutosizeColumn</a></code></li>
 <li><code><a title="m45wxcontrols.UniversalListCtrl.Bind" href="#m45wxcontrols.UniversalListCtrl.Bind">Bind</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.Clear" href="#m45wxcontrols.UniversalListCtrl.Clear">Clear</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.ClearSelection" href="#m45wxcontrols.UniversalListCtrl.ClearSelection">ClearSelection</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.DeleteAllItems" href="#m45wxcontrols.UniversalListCtrl.DeleteAllItems">DeleteAllItems</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.DeleteRow" href="#m45wxcontrols.UniversalListCtrl.DeleteRow">DeleteRow</a></code></li>
 <li><code><a title="m45wxcontrols.UniversalListCtrl.EVT_ITEM_CHECKED" href="#m45wxcontrols.UniversalListCtrl.EVT_ITEM_CHECKED">EVT_ITEM_CHECKED</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.EnsureVisible" href="#m45wxcontrols.UniversalListCtrl.EnsureVisible">EnsureVisible</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.FocusRow" href="#m45wxcontrols.UniversalListCtrl.FocusRow">FocusRow</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.Freeze" href="#m45wxcontrols.UniversalListCtrl.Freeze">Freeze</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.GetColumnCount" href="#m45wxcontrols.UniversalListCtrl.GetColumnCount">GetColumnCount</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.GetColumnWidth" href="#m45wxcontrols.UniversalListCtrl.GetColumnWidth">GetColumnWidth</a></code></li>
 <li><code><a title="m45wxcontrols.UniversalListCtrl.GetControl" href="#m45wxcontrols.UniversalListCtrl.GetControl">GetControl</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.GetFocusedRow" href="#m45wxcontrols.UniversalListCtrl.GetFocusedRow">GetFocusedRow</a></code></li>
 <li><code><a title="m45wxcontrols.UniversalListCtrl.GetItemCount" href="#m45wxcontrols.UniversalListCtrl.GetItemCount">GetItemCount</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.GetItemText" href="#m45wxcontrols.UniversalListCtrl.GetItemText">GetItemText</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.GetRow" href="#m45wxcontrols.UniversalListCtrl.GetRow">GetRow</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.GetRowData" href="#m45wxcontrols.UniversalListCtrl.GetRowData">GetRowData</a></code></li>
 <li><code><a title="m45wxcontrols.UniversalListCtrl.GetSelectedRow" href="#m45wxcontrols.UniversalListCtrl.GetSelectedRow">GetSelectedRow</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.GetSelectedRows" href="#m45wxcontrols.UniversalListCtrl.GetSelectedRows">GetSelectedRows</a></code></li>
 <li><code><a title="m45wxcontrols.UniversalListCtrl.InsertColumn" href="#m45wxcontrols.UniversalListCtrl.InsertColumn">InsertColumn</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.InsertRow" href="#m45wxcontrols.UniversalListCtrl.InsertRow">InsertRow</a></code></li>
 <li><code><a title="m45wxcontrols.UniversalListCtrl.IsChecked" href="#m45wxcontrols.UniversalListCtrl.IsChecked">IsChecked</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.IsSelected" href="#m45wxcontrols.UniversalListCtrl.IsSelected">IsSelected</a></code></li>
 <li><code><a title="m45wxcontrols.UniversalListCtrl.SelectRow" href="#m45wxcontrols.UniversalListCtrl.SelectRow">SelectRow</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.SelectRows" href="#m45wxcontrols.UniversalListCtrl.SelectRows">SelectRows</a></code></li>
 <li><code><a title="m45wxcontrols.UniversalListCtrl.SetChecked" href="#m45wxcontrols.UniversalListCtrl.SetChecked">SetChecked</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.SetColumnWidth" href="#m45wxcontrols.UniversalListCtrl.SetColumnWidth">SetColumnWidth</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.SetItemText" href="#m45wxcontrols.UniversalListCtrl.SetItemText">SetItemText</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.SetRow" href="#m45wxcontrols.UniversalListCtrl.SetRow">SetRow</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.SetRowData" href="#m45wxcontrols.UniversalListCtrl.SetRowData">SetRowData</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.Thaw" href="#m45wxcontrols.UniversalListCtrl.Thaw">Thaw</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.batch_update" href="#m45wxcontrols.UniversalListCtrl.batch_update">batch_update</a></code></li>
 </ul>
 </li>
 </ul>
