@@ -1,10 +1,11 @@
 """
 Universal list class to choose between ListCtrl and DataViewListCtrl
 """
-import wx
-import wx.dataview as dv
+from contextlib import contextmanager
 import sys
 
+import wx
+import wx.dataview as dv
 
 
 class UniversalListCtrl:
@@ -12,8 +13,9 @@ class UniversalListCtrl:
     Cross-platform list wrapper with optional checkbox support.
 
     wx.ListCtrl is used on Windows, while wx.dataview.DataViewListCtrl is used
-    on Linux and macOS for better accessibility. The wrapper normalizes the
-    small subset of list operations used by the application.
+    on Linux and macOS for better accessibility. The wrapper normalizes list
+    operations used by applications so callers do not need to branch on the
+    active control type.
     """
 
     EVT_ITEM_CHECKED = wx.NewEventType()
@@ -41,6 +43,7 @@ class UniversalListCtrl:
         self.use_dataview = sys.platform.startswith('linux') or sys.platform == 'darwin' or force_dataview
         self.checkboxes = checkboxes
         self._checkbox_column = None
+        self._row_data = []
 
         if self.use_dataview:
             self.control = dv.DataViewListCtrl(parent, style=style, size=size)
@@ -48,6 +51,22 @@ class UniversalListCtrl:
             self.control = wx.ListCtrl(parent, style=style, size=size)
             if self.checkboxes:
                 self.control.EnableCheckBoxes()
+
+    def _format_row(self, entry):
+        """
+        Convert row values into the representation expected by the active
+        control.
+        """
+        return [
+            bool(item) if col_idx == self._checkbox_column else str(item)
+            for col_idx, item in enumerate(entry)
+        ]
+
+    def _is_valid_row(self, index):
+        """
+        Return whether a row index points to an existing row.
+        """
+        return 0 <= index < self.GetItemCount()
 
     def InsertColumn(self, col, heading, width=wx.LIST_AUTOSIZE, checkbox=False):
         """
@@ -86,11 +105,7 @@ class UniversalListCtrl:
         if self.use_dataview:
             # DataViewListCtrl.AppendItem expects exactly one argument: a sequence
             # Keep toggle columns as bool and format text columns as strings.
-            formatted_entry = [
-                bool(item) if col_idx == self._checkbox_column else str(item)
-                for col_idx, item in enumerate(entry)
-            ]
-            self.control.AppendItem(formatted_entry)
+            self.control.AppendItem(self._format_row(entry))
         else:
             # ListCtrl: Insert the first item, then set sub-items
             index = self.control.GetItemCount()
@@ -104,6 +119,180 @@ class UniversalListCtrl:
             for col_idx in range(text_start_col, len(entry)):
                 self.control.SetItem(index, col_idx, str(entry[col_idx]))
 
+        self._row_data.append(None)
+
+    def AppendRow(self, entry, data=None):
+        """
+        Append a row and optionally attach application data to it.
+
+        Args:
+            entry: Sequence of row values.
+            data: Optional application-specific object associated with the row.
+        """
+        self.Append(entry)
+        self.SetRowData(self.GetItemCount() - 1, data)
+
+    def InsertRow(self, index, entry, data=None):
+        """
+        Insert a row at a specific index.
+
+        Args:
+            index: Zero-based insertion index. Values outside the list are
+                clamped to the beginning or end.
+            entry: Sequence of row values.
+            data: Optional application-specific object associated with the row.
+        """
+        index = max(0, min(index, self.GetItemCount()))
+
+        if self.use_dataview:
+            self.control.InsertItem(index, self._format_row(entry))
+        else:
+            if self._checkbox_column == 0:
+                self.control.InsertItem(index, "")
+                self.control.CheckItem(index, bool(entry[0]))
+                text_start_col = 1
+            else:
+                self.control.InsertItem(index, str(entry[0]))
+                text_start_col = 1
+            for col_idx in range(text_start_col, len(entry)):
+                self.control.SetItem(index, col_idx, str(entry[col_idx]))
+
+        self._row_data.insert(index, data)
+
+    def DeleteRow(self, index):
+        """
+        Delete a row by index.
+
+        Args:
+            index: Zero-based row index to delete.
+
+        Returns:
+            bool: True when a row was deleted, otherwise False.
+        """
+        if not self._is_valid_row(index):
+            return False
+
+        self.control.DeleteItem(index)
+        if index < len(self._row_data):
+            del self._row_data[index]
+        return True
+
+    def DeleteAllItems(self):
+        """
+        Delete all rows from the list.
+        """
+        self.control.DeleteAllItems()
+        self._row_data.clear()
+
+    def Clear(self):
+        """
+        Delete all rows from the list.
+        """
+        self.DeleteAllItems()
+
+    def GetItemText(self, row, col=0):
+        """
+        Return the text shown in a cell.
+
+        Args:
+            row: Zero-based row index.
+            col: Zero-based column index.
+
+        Returns:
+            str: Cell text, or an empty string for invalid rows.
+        """
+        if not self._is_valid_row(row):
+            return ""
+
+        if self.use_dataview:
+            if col == self._checkbox_column:
+                return str(self.control.GetToggleValue(row, col))
+            return self.control.GetTextValue(row, col)
+        return self.control.GetItemText(row, col)
+
+    def SetItemText(self, row, col, text):
+        """
+        Set the text/value shown in a cell.
+
+        Args:
+            row: Zero-based row index.
+            col: Zero-based column index.
+            text: New cell value. Checkbox columns interpret this as bool.
+        """
+        if not self._is_valid_row(row):
+            return
+
+        if col == self._checkbox_column:
+            self.SetChecked(row, bool(text))
+        elif self.use_dataview:
+            self.control.SetTextValue(str(text), row, col)
+        else:
+            self.control.SetItem(row, col, str(text))
+
+    def GetRow(self, row):
+        """
+        Return all cell values for a row.
+
+        Args:
+            row: Zero-based row index.
+
+        Returns:
+            list: Row values. Checkbox columns are returned as bool values.
+        """
+        if not self._is_valid_row(row):
+            return []
+
+        values = []
+        for col in range(self.GetColumnCount()):
+            if col == self._checkbox_column:
+                values.append(self.IsChecked(row))
+            else:
+                values.append(self.GetItemText(row, col))
+        return values
+
+    def SetRow(self, row, values):
+        """
+        Replace the visible values in an existing row.
+
+        Args:
+            row: Zero-based row index.
+            values: Sequence of new row values.
+        """
+        if not self._is_valid_row(row):
+            return
+
+        for col, value in enumerate(values):
+            self.SetItemText(row, col, value)
+
+    def SetRowData(self, row, data):
+        """
+        Associate arbitrary application data with a row.
+
+        Args:
+            row: Zero-based row index.
+            data: Application-specific object to store.
+        """
+        if not self._is_valid_row(row):
+            return
+
+        while len(self._row_data) < self.GetItemCount():
+            self._row_data.append(None)
+        self._row_data[row] = data
+
+    def GetRowData(self, row):
+        """
+        Return application data associated with a row.
+
+        Args:
+            row: Zero-based row index.
+
+        Returns:
+            object: Stored row data, or None when no data is stored.
+        """
+        if not self._is_valid_row(row) or row >= len(self._row_data):
+            return None
+        return self._row_data[row]
+
     def Bind(self, event_type, handler):
         """
         Unifies binding for common list events.
@@ -115,11 +304,11 @@ class UniversalListCtrl:
         if event_type == wx.EVT_LIST_ITEM_SELECTED:
             if self.use_dataview:
                 # Map DataView selection to List selection logic
-                self.control.Bind(dv.EVT_DATAVIEW_SELECTION_CHANGED, 
+                self.control.Bind(dv.EVT_DATAVIEW_SELECTION_CHANGED,
                                   lambda evt: self._handle_selection(evt, handler))
             else:
                 self.control.Bind(wx.EVT_LIST_ITEM_SELECTED, handler)
-        
+
         elif event_type in [wx.EVT_CONTEXT_MENU, wx.EVT_CHAR_HOOK]:
             # These are standard wx.Window events, no mapping needed
             self.control.Bind(event_type, handler)
@@ -139,21 +328,21 @@ class UniversalListCtrl:
                     wx.EVT_LIST_ITEM_UNCHECKED,
                     lambda evt: self._handle_check(evt, handler)
                 )
-        
+
         else:
             # Fallback for other events
             self.control.Bind(event_type, handler)
 
     def _handle_selection(self, evt, user_handler):
         """
-        Internal helper to normalize DataViewEvent so it feels 
+        Internal helper to normalize DataViewEvent so it feels
         closer to a ListEvent for the handler.
 
         Args:
             evt: Native DataView selection event.
             user_handler: Original event handler supplied by the caller.
         """
-        # Accessibility: Ensure screen reader focus remains stable 
+        # Accessibility: Ensure screen reader focus remains stable
         # while processing selection logic.
         if self.use_dataview:
             item = evt.GetItem()
@@ -161,7 +350,7 @@ class UniversalListCtrl:
                 # We can inject a 'GetIndex' method into the event object
                 # to mimic ListEvent if necessary, or just call the handler.
                 evt.GetIndex = lambda: self.control.ItemToRow(item)
-        
+
         user_handler(evt)
 
     def _handle_check(self, evt, user_handler):
@@ -204,6 +393,40 @@ class UniversalListCtrl:
         else:
             return self.control.GetFirstSelected()
 
+    def GetSelectedRows(self):
+        """
+        Return all selected row indices.
+
+        Returns:
+            list[int]: Selected row indices.
+        """
+        if self.use_dataview:
+            selections = self.control.GetSelections()
+            return [
+                self.control.ItemToRow(item)
+                for item in selections
+                if item.IsOk()
+            ]
+
+        rows = []
+        row = self.control.GetFirstSelected()
+        while row != -1:
+            rows.append(row)
+            row = self.control.GetNextSelected(row)
+        return rows
+
+    def IsSelected(self, index):
+        """
+        Return whether a row is currently selected.
+        """
+        if not self._is_valid_row(index):
+            return False
+
+        if self.use_dataview:
+            item = self.control.RowToItem(index)
+            return item.IsOk() and self.control.IsSelected(item)
+        return self.control.GetItemState(index, wx.LIST_STATE_SELECTED) != 0
+
     def GetItemCount(self):
         """
         Return the total number of items in the list.
@@ -233,6 +456,136 @@ class UniversalListCtrl:
         else:
             self.control.Select(index)
             self.control.Focus(index)
+
+    def SelectRows(self, indices):
+        """
+        Select multiple rows.
+
+        Args:
+            indices: Iterable of zero-based row indices.
+        """
+        self.ClearSelection()
+        for index in indices:
+            if not self._is_valid_row(index):
+                continue
+            if self.use_dataview:
+                item = self.control.RowToItem(index)
+                if item.IsOk():
+                    self.control.Select(item)
+            else:
+                self.control.Select(index)
+
+    def ClearSelection(self):
+        """
+        Clear the current row selection.
+        """
+        if self.use_dataview:
+            self.control.UnselectAll()
+        else:
+            for index in self.GetSelectedRows():
+                self.control.Select(index, False)
+
+    def FocusRow(self, index):
+        """
+        Move keyboard focus to a row without changing its checked state.
+        """
+        if not self._is_valid_row(index):
+            return
+
+        if self.use_dataview:
+            item = self.control.RowToItem(index)
+            if item.IsOk():
+                self.control.SetCurrentItem(item)
+                self.control.EnsureVisible(item)
+        else:
+            self.control.Focus(index)
+
+    def EnsureVisible(self, index):
+        """
+        Scroll a row into view.
+        """
+        if not self._is_valid_row(index):
+            return
+
+        if self.use_dataview:
+            item = self.control.RowToItem(index)
+            if item.IsOk():
+                self.control.EnsureVisible(item)
+        else:
+            self.control.EnsureVisible(index)
+
+    def GetFocusedRow(self):
+        """
+        Return the row that currently has keyboard focus.
+
+        Returns:
+            int: Focused row index, or -1 when no row has focus.
+        """
+        if self.use_dataview:
+            item = self.control.GetCurrentItem()
+            return self.control.ItemToRow(item) if item.IsOk() else -1
+        return self.control.GetFocusedItem()
+
+    def GetColumnCount(self):
+        """
+        Return the number of columns.
+        """
+        return self.control.GetColumnCount()
+
+    def SetColumnWidth(self, col, width):
+        """
+        Set the width of a column.
+        """
+        if col < 0 or col >= self.GetColumnCount():
+            return
+
+        if self.use_dataview:
+            self.control.GetColumn(col).SetWidth(width)
+        else:
+            self.control.SetColumnWidth(col, width)
+
+    def GetColumnWidth(self, col):
+        """
+        Return the width of a column.
+        """
+        if col < 0 or col >= self.GetColumnCount():
+            return 0
+
+        if self.use_dataview:
+            return self.control.GetColumn(col).GetWidth()
+        return self.control.GetColumnWidth(col)
+
+    def AutosizeColumn(self, col):
+        """
+        Resize a column to fit its content.
+        """
+        if col < 0 or col >= self.GetColumnCount():
+            return
+
+        self.SetColumnWidth(col, wx.LIST_AUTOSIZE)
+
+    def Freeze(self):
+        """
+        Freeze visual updates for batch changes.
+        """
+        self.control.Freeze()
+
+    def Thaw(self):
+        """
+        Resume visual updates after batch changes.
+        """
+        self.control.Thaw()
+
+    @contextmanager
+    def batch_update(self):
+        """
+        Context manager that freezes the control during multiple updates.
+        """
+        self.Freeze()
+        try:
+            yield self
+        finally:
+            self.Thaw()
 
     def SetChecked(self, index, checked):
         """
