@@ -485,6 +485,12 @@ class UniversalListCtrl:
             for index in self.GetSelectedRows():
                 self.control.Select(index, False)
 
+    def SetFocus(self):
+        """
+        Move keyboard focus to list control.
+        """
+        self.control.SetFocus()
+
     def FocusRow(self, index):
         """
         Move keyboard focus to a row without changing its checked state.
