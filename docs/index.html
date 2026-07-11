@@ -41,6 +41,10 @@ el.replaceWith(d);
 <section>
 <h2 class="section-title" id="header-submodules">Sub-modules</h2>
 <dl>
+<dt><code class="name"><a title="m45wxcontrols.accessible_listbook" href="accessible_listbook.html">m45wxcontrols.accessible_listbook</a></code></dt>
+<dd>
+<div class="desc"><p>Accessible listbook control backed by wx.ListBox.</p></div>
+</dd>
 <dt><code class="name"><a title="m45wxcontrols.accessible_spin" href="accessible_spin.html">m45wxcontrols.accessible_spin</a></code></dt>
 <dd>
 <div class="desc"><p>Accessible spinbutton class</p></div>
@@ -62,6 +66,918 @@ el.replaceWith(d);
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
+<dt id="m45wxcontrols.AccessibleListbook"><code class="flex name class">
+<span>class <span class="ident">AccessibleListbook</span></span>
+<span>(</span><span>parent,<br>id=-1,<br>pos=wx.Point(-1, -1),<br>size=wx.Size(-1, -1),<br>style=524288,<br>name='AccessibleListbook',<br>list_width=180)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class AccessibleListbook(wx.Panel):
+    &#34;&#34;&#34;
+    Accessible wx.Listbook-style control using wx.ListBox for page selection.
+
+    The category list is a plain wx.ListBox, which is easier to use with
+    screen readers on platforms where wx.ListCtrl accessibility is limited.
+    Pages are ordinary wx.Window instances that are shown when their matching
+    list entry is selected.
+    &#34;&#34;&#34;
+
+    def __init__(
+        self,
+        parent,
+        id=wx.ID_ANY,
+        pos=wx.DefaultPosition,
+        size=wx.DefaultSize,
+        style=wx.TAB_TRAVERSAL,
+        name=&#34;AccessibleListbook&#34;,
+        list_width=180,
+    ):
+        &#34;&#34;&#34;
+        Initialize the accessible listbook.
+
+        Args:
+            parent: Parent wx window.
+            id: Window id.
+            pos: Initial position.
+            size: Initial size.
+            style: wx.Panel style flags.
+            name: Control name.
+            list_width: Width of the category list in pixels.
+        &#34;&#34;&#34;
+        super().__init__(parent, id=id, pos=pos, size=size, style=style, name=name)
+
+        self._pages = []
+        self._page_texts = []
+        self._page_images = []
+        self._selection = wx.NOT_FOUND
+        self._changing_selection = False
+
+        self.list_label = wx.StaticText(self, label=&#34;Cate&amp;gories&#34;)
+        self.listbox = wx.ListBox(self, style=wx.LB_SINGLE | wx.BORDER_SUNKEN)
+        self.listbox.SetName(f&#34;{name} categories&#34;)
+        self.page_area = wx.Panel(self, style=wx.TAB_TRAVERSAL)
+
+        self._page_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.page_area.SetSizer(self._page_sizer)
+
+        left = wx.BoxSizer(wx.VERTICAL)
+        left.Add(self.list_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 5)
+        left.Add(self.listbox, 1, wx.EXPAND | wx.ALL, 5)
+
+        root = wx.BoxSizer(wx.HORIZONTAL)
+        root.Add(left, 0, wx.EXPAND)
+        root.SetItemMinSize(left, list_width, -1)
+        root.Add(self.page_area, 1, wx.EXPAND | wx.TOP | wx.RIGHT | wx.BOTTOM, 5)
+        self.SetSizer(root)
+
+        self.listbox.Bind(wx.EVT_LISTBOX, self._on_listbox_selection)
+
+    def AddPage(self, page, text, select=False, imageId=wx.NOT_FOUND):
+        &#34;&#34;&#34;
+        Add a page to the end of the control.
+
+        Args:
+            page: wx.Window displayed as page content.
+            text: Label shown in the category list.
+            select: Whether to select the new page immediately.
+            imageId: Stored for Listbook API compatibility. Images are not
+                displayed by wx.ListBox.
+
+        Returns:
+            bool: True when the page was added.
+        &#34;&#34;&#34;
+        return self.InsertPage(self.GetPageCount(), page, text, select, imageId)
+
+    def InsertPage(self, index, page, text, select=False, imageId=wx.NOT_FOUND):
+        &#34;&#34;&#34;
+        Insert a page at a specific index.
+        &#34;&#34;&#34;
+        index = max(0, min(index, self.GetPageCount()))
+        self._prepare_page(page)
+
+        self._pages.insert(index, page)
+        self._page_texts.insert(index, str(text))
+        self._page_images.insert(index, imageId)
+        self.listbox.Insert(str(text), index)
+        self._page_sizer.Insert(index, page, 1, wx.EXPAND)
+        page.Hide()
+
+        if self._selection == wx.NOT_FOUND or select:
+            self.ChangeSelection(index)
+        elif index &lt;= self._selection:
+            self._selection += 1
+            self.listbox.SetSelection(self._selection)
+
+        self.Layout()
+        return True
+
+    def DeletePage(self, index):
+        &#34;&#34;&#34;
+        Delete and destroy a page.
+
+        Returns:
+            bool: True when a page was deleted.
+        &#34;&#34;&#34;
+        page = self.RemovePage(index)
+        if page is None:
+            return False
+        page.Destroy()
+        return True
+
+    def RemovePage(self, index):
+        &#34;&#34;&#34;
+        Remove a page without destroying it.
+
+        Returns:
+            wx.Window | None: Removed page, or None for an invalid index.
+        &#34;&#34;&#34;
+        if not self._is_valid_index(index):
+            return None
+
+        page = self._pages.pop(index)
+        del self._page_texts[index]
+        del self._page_images[index]
+        self.listbox.Delete(index)
+        self._page_sizer.Detach(page)
+        page.Hide()
+
+        if not self._pages:
+            self._selection = wx.NOT_FOUND
+            self.listbox.SetSelection(wx.NOT_FOUND)
+        elif index == self._selection:
+            self._selection = wx.NOT_FOUND
+            self.ChangeSelection(min(index, self.GetPageCount() - 1))
+        elif index &lt; self._selection:
+            self._selection -= 1
+            self.listbox.SetSelection(self._selection)
+
+        self.Layout()
+        return page
+
+    def DeleteAllPages(self):
+        &#34;&#34;&#34;
+        Delete and destroy all pages.
+        &#34;&#34;&#34;
+        for page in self._pages:
+            self._page_sizer.Detach(page)
+            page.Destroy()
+        self._pages.clear()
+        self._page_texts.clear()
+        self._page_images.clear()
+        self.listbox.Clear()
+        self._selection = wx.NOT_FOUND
+        self.Layout()
+
+    def GetPage(self, index):
+        &#34;&#34;&#34;
+        Return the page at index, or None when the index is invalid.
+        &#34;&#34;&#34;
+        if not self._is_valid_index(index):
+            return None
+        return self._pages[index]
+
+    def GetCurrentPage(self):
+        &#34;&#34;&#34;
+        Return the currently selected page, or None when no page is selected.
+        &#34;&#34;&#34;
+        return self.GetPage(self._selection)
+
+    def GetPageCount(self):
+        &#34;&#34;&#34;
+        Return the number of pages.
+        &#34;&#34;&#34;
+        return len(self._pages)
+
+    def GetPageText(self, index):
+        &#34;&#34;&#34;
+        Return a page label.
+        &#34;&#34;&#34;
+        if not self._is_valid_index(index):
+            return &#34;&#34;
+        return self._page_texts[index]
+
+    def SetPageText(self, index, text):
+        &#34;&#34;&#34;
+        Set a page label.
+
+        Returns:
+            bool: True when the label was updated.
+        &#34;&#34;&#34;
+        if not self._is_valid_index(index):
+            return False
+        self._page_texts[index] = str(text)
+        self.listbox.SetString(index, str(text))
+        return True
+
+    def GetPageImage(self, index):
+        &#34;&#34;&#34;
+        Return the stored image id for API compatibility.
+        &#34;&#34;&#34;
+        if not self._is_valid_index(index):
+            return wx.NOT_FOUND
+        return self._page_images[index]
+
+    def SetPageImage(self, index, imageId):
+        &#34;&#34;&#34;
+        Store an image id for API compatibility.
+
+        wx.ListBox does not display images, but callers can still keep their
+        Listbook-oriented code paths intact.
+        &#34;&#34;&#34;
+        if not self._is_valid_index(index):
+            return False
+        self._page_images[index] = imageId
+        return True
+
+    def GetSelection(self):
+        &#34;&#34;&#34;
+        Return the selected page index, or wx.NOT_FOUND.
+        &#34;&#34;&#34;
+        return self._selection
+
+    def SetSelection(self, index):
+        &#34;&#34;&#34;
+        Select a page and emit listbook page changing/changed events.
+
+        Returns:
+            int: Previously selected index, or wx.NOT_FOUND if selection failed.
+        &#34;&#34;&#34;
+        return self._set_selection(index, emit_events=True)
+
+    def ChangeSelection(self, index):
+        &#34;&#34;&#34;
+        Select a page without emitting page changing/changed events.
+
+        Returns:
+            int: Previously selected index, or wx.NOT_FOUND if selection failed.
+        &#34;&#34;&#34;
+        return self._set_selection(index, emit_events=False)
+
+    def AdvanceSelection(self, forward=True):
+        &#34;&#34;&#34;
+        Move selection to the next or previous page.
+        &#34;&#34;&#34;
+        count = self.GetPageCount()
+        if count == 0:
+            return
+
+        if self._selection == wx.NOT_FOUND:
+            self.SetSelection(0)
+            return
+
+        step = 1 if forward else -1
+        self.SetSelection((self._selection + step) % count)
+
+    def GetStaticLabel(self):
+        &#34;&#34;&#34;
+        Return the text shown above the category list.
+        &#34;&#34;&#34;
+        return self.list_label.GetLabel()
+
+    def SetStaticLabel(self, label):
+        &#34;&#34;&#34;
+        Set the text shown above the category list.
+
+        This is useful for localized applications because wx.Panel itself does
+        not accept a label argument.
+        &#34;&#34;&#34;
+        self.list_label.SetLabel(str(label))
+        self.Layout()
+
+    def GetListBox(self):
+        &#34;&#34;&#34;
+        Return the wx.ListBox used for category navigation.
+        &#34;&#34;&#34;
+        return self.listbox
+
+    def GetPageArea(self):
+        &#34;&#34;&#34;
+        Return the panel that owns page windows.
+        &#34;&#34;&#34;
+        return self.page_area
+
+    def SetListWidth(self, width):
+        &#34;&#34;&#34;
+        Set the fixed width of the category list.
+        &#34;&#34;&#34;
+        item = self.GetSizer().GetItem(self.listbox)
+        if item is not None:
+            item.SetMinSize(width, -1)
+            self.Layout()
+
+    def _prepare_page(self, page):
+        &#34;&#34;&#34;
+        Ensure a page belongs to the internal page area.
+        &#34;&#34;&#34;
+        if page.GetParent() is not self.page_area:
+            page.Reparent(self.page_area)
+
+    def _is_valid_index(self, index):
+        &#34;&#34;&#34;
+        Return whether index points to an existing page.
+        &#34;&#34;&#34;
+        return 0 &lt;= index &lt; self.GetPageCount()
+
+    def _set_selection(self, index, emit_events, sync_listbox=True):
+        &#34;&#34;&#34;
+        Internal selection implementation.
+        &#34;&#34;&#34;
+        if not self._is_valid_index(index):
+            return wx.NOT_FOUND
+
+        old_selection = self._selection
+        if index == old_selection:
+            if sync_listbox:
+                self.listbox.SetSelection(index)
+            return old_selection
+
+        if emit_events and not self._send_book_event(
+            wx.wxEVT_LISTBOOK_PAGE_CHANGING,
+            index,
+            old_selection,
+        ):
+            if sync_listbox:
+                self.listbox.SetSelection(old_selection)
+            return wx.NOT_FOUND
+
+        self._show_page(index, sync_listbox=sync_listbox)
+
+        if emit_events:
+            self._send_book_event(wx.wxEVT_LISTBOOK_PAGE_CHANGED, index, old_selection)
+
+        return old_selection
+
+    def _show_page(self, index, sync_listbox=True):
+        &#34;&#34;&#34;
+        Show one page and hide the previously selected page.
+        &#34;&#34;&#34;
+        old_selection = self._selection
+        self._changing_selection = True
+        self.page_area.Freeze()
+        try:
+            if self._is_valid_index(old_selection):
+                self._pages[old_selection].Hide()
+            self._pages[index].Show()
+            self._selection = index
+            if sync_listbox:
+                self.listbox.SetSelection(index)
+            self.page_area.Layout()
+        finally:
+            self.page_area.Thaw()
+            self._changing_selection = False
+
+    def _send_book_event(self, event_type, selection, old_selection):
+        &#34;&#34;&#34;
+        Send a wx.BookCtrlEvent and report whether it was allowed.
+        &#34;&#34;&#34;
+        event = wx.BookCtrlEvent(event_type, self.GetId(), selection, old_selection)
+        event.SetEventObject(self)
+        self.GetEventHandler().ProcessEvent(event)
+        return event.IsAllowed()
+
+    def _on_listbox_selection(self, event):
+        &#34;&#34;&#34;
+        Select pages when users move through the listbox.
+        &#34;&#34;&#34;
+        if self._changing_selection:
+            return
+
+        previous = self._selection
+        selected = event.GetSelection()
+        result = self._set_selection(selected, emit_events=True, sync_listbox=False)
+        if result == wx.NOT_FOUND and previous != wx.NOT_FOUND:
+            self.listbox.SetSelection(previous)</code></pre>
+</details>
+<div class="desc"><p>Accessible wx.Listbook-style control using wx.ListBox for page selection.</p>
+<p>The category list is a plain wx.ListBox, which is easier to use with
+screen readers on platforms where wx.ListCtrl accessibility is limited.
+Pages are ordinary wx.Window instances that are shown when their matching
+list entry is selected.</p>
+<p>Initialize the accessible listbook.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>parent</code></strong></dt>
+<dd>Parent wx window.</dd>
+<dt><strong><code>id</code></strong></dt>
+<dd>Window id.</dd>
+<dt><strong><code>pos</code></strong></dt>
+<dd>Initial position.</dd>
+<dt><strong><code>size</code></strong></dt>
+<dd>Initial size.</dd>
+<dt><strong><code>style</code></strong></dt>
+<dd>wx.Panel style flags.</dd>
+<dt><strong><code>name</code></strong></dt>
+<dd>Control name.</dd>
+<dt><strong><code>list_width</code></strong></dt>
+<dd>Width of the category list in pixels.</dd>
+</dl></div>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>wx._core.Panel</li>
+<li>wx._core.Window</li>
+<li>wx._core.WindowBase</li>
+<li>wx._core.EvtHandler</li>
+<li>wx._core.Object</li>
+<li>wx._core.Trackable</li>
+<li>sip.wrapper</li>
+<li>sip.simplewrapper</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="m45wxcontrols.AccessibleListbook.AddPage"><code class="name flex">
+<span>def <span class="ident">AddPage</span></span>(<span>self, page, text, select=False, imageId=-1)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def AddPage(self, page, text, select=False, imageId=wx.NOT_FOUND):
+    &#34;&#34;&#34;
+    Add a page to the end of the control.
+
+    Args:
+        page: wx.Window displayed as page content.
+        text: Label shown in the category list.
+        select: Whether to select the new page immediately.
+        imageId: Stored for Listbook API compatibility. Images are not
+            displayed by wx.ListBox.
+
+    Returns:
+        bool: True when the page was added.
+    &#34;&#34;&#34;
+    return self.InsertPage(self.GetPageCount(), page, text, select, imageId)</code></pre>
+</details>
+<div class="desc"><p>Add a page to the end of the control.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>page</code></strong></dt>
+<dd>wx.Window displayed as page content.</dd>
+<dt><strong><code>text</code></strong></dt>
+<dd>Label shown in the category list.</dd>
+<dt><strong><code>select</code></strong></dt>
+<dd>Whether to select the new page immediately.</dd>
+<dt><strong><code>imageId</code></strong></dt>
+<dd>Stored for Listbook API compatibility. Images are not
+displayed by wx.ListBox.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True when the page was added.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.AccessibleListbook.AdvanceSelection"><code class="name flex">
+<span>def <span class="ident">AdvanceSelection</span></span>(<span>self, forward=True)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def AdvanceSelection(self, forward=True):
+    &#34;&#34;&#34;
+    Move selection to the next or previous page.
+    &#34;&#34;&#34;
+    count = self.GetPageCount()
+    if count == 0:
+        return
+
+    if self._selection == wx.NOT_FOUND:
+        self.SetSelection(0)
+        return
+
+    step = 1 if forward else -1
+    self.SetSelection((self._selection + step) % count)</code></pre>
+</details>
+<div class="desc"><p>Move selection to the next or previous page.</p></div>
+</dd>
+<dt id="m45wxcontrols.AccessibleListbook.ChangeSelection"><code class="name flex">
+<span>def <span class="ident">ChangeSelection</span></span>(<span>self, index)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def ChangeSelection(self, index):
+    &#34;&#34;&#34;
+    Select a page without emitting page changing/changed events.
+
+    Returns:
+        int: Previously selected index, or wx.NOT_FOUND if selection failed.
+    &#34;&#34;&#34;
+    return self._set_selection(index, emit_events=False)</code></pre>
+</details>
+<div class="desc"><p>Select a page without emitting page changing/changed events.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>Previously selected index, or wx.NOT_FOUND if selection failed.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.AccessibleListbook.DeleteAllPages"><code class="name flex">
+<span>def <span class="ident">DeleteAllPages</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def DeleteAllPages(self):
+    &#34;&#34;&#34;
+    Delete and destroy all pages.
+    &#34;&#34;&#34;
+    for page in self._pages:
+        self._page_sizer.Detach(page)
+        page.Destroy()
+    self._pages.clear()
+    self._page_texts.clear()
+    self._page_images.clear()
+    self.listbox.Clear()
+    self._selection = wx.NOT_FOUND
+    self.Layout()</code></pre>
+</details>
+<div class="desc"><p>Delete and destroy all pages.</p></div>
+</dd>
+<dt id="m45wxcontrols.AccessibleListbook.DeletePage"><code class="name flex">
+<span>def <span class="ident">DeletePage</span></span>(<span>self, index)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def DeletePage(self, index):
+    &#34;&#34;&#34;
+    Delete and destroy a page.
+
+    Returns:
+        bool: True when a page was deleted.
+    &#34;&#34;&#34;
+    page = self.RemovePage(index)
+    if page is None:
+        return False
+    page.Destroy()
+    return True</code></pre>
+</details>
+<div class="desc"><p>Delete and destroy a page.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True when a page was deleted.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.AccessibleListbook.GetCurrentPage"><code class="name flex">
+<span>def <span class="ident">GetCurrentPage</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GetCurrentPage(self):
+    &#34;&#34;&#34;
+    Return the currently selected page, or None when no page is selected.
+    &#34;&#34;&#34;
+    return self.GetPage(self._selection)</code></pre>
+</details>
+<div class="desc"><p>Return the currently selected page, or None when no page is selected.</p></div>
+</dd>
+<dt id="m45wxcontrols.AccessibleListbook.GetListBox"><code class="name flex">
+<span>def <span class="ident">GetListBox</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GetListBox(self):
+    &#34;&#34;&#34;
+    Return the wx.ListBox used for category navigation.
+    &#34;&#34;&#34;
+    return self.listbox</code></pre>
+</details>
+<div class="desc"><p>Return the wx.ListBox used for category navigation.</p></div>
+</dd>
+<dt id="m45wxcontrols.AccessibleListbook.GetPage"><code class="name flex">
+<span>def <span class="ident">GetPage</span></span>(<span>self, index)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GetPage(self, index):
+    &#34;&#34;&#34;
+    Return the page at index, or None when the index is invalid.
+    &#34;&#34;&#34;
+    if not self._is_valid_index(index):
+        return None
+    return self._pages[index]</code></pre>
+</details>
+<div class="desc"><p>Return the page at index, or None when the index is invalid.</p></div>
+</dd>
+<dt id="m45wxcontrols.AccessibleListbook.GetPageArea"><code class="name flex">
+<span>def <span class="ident">GetPageArea</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GetPageArea(self):
+    &#34;&#34;&#34;
+    Return the panel that owns page windows.
+    &#34;&#34;&#34;
+    return self.page_area</code></pre>
+</details>
+<div class="desc"><p>Return the panel that owns page windows.</p></div>
+</dd>
+<dt id="m45wxcontrols.AccessibleListbook.GetPageCount"><code class="name flex">
+<span>def <span class="ident">GetPageCount</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GetPageCount(self):
+    &#34;&#34;&#34;
+    Return the number of pages.
+    &#34;&#34;&#34;
+    return len(self._pages)</code></pre>
+</details>
+<div class="desc"><p>Return the number of pages.</p></div>
+</dd>
+<dt id="m45wxcontrols.AccessibleListbook.GetPageImage"><code class="name flex">
+<span>def <span class="ident">GetPageImage</span></span>(<span>self, index)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GetPageImage(self, index):
+    &#34;&#34;&#34;
+    Return the stored image id for API compatibility.
+    &#34;&#34;&#34;
+    if not self._is_valid_index(index):
+        return wx.NOT_FOUND
+    return self._page_images[index]</code></pre>
+</details>
+<div class="desc"><p>Return the stored image id for API compatibility.</p></div>
+</dd>
+<dt id="m45wxcontrols.AccessibleListbook.GetPageText"><code class="name flex">
+<span>def <span class="ident">GetPageText</span></span>(<span>self, index)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GetPageText(self, index):
+    &#34;&#34;&#34;
+    Return a page label.
+    &#34;&#34;&#34;
+    if not self._is_valid_index(index):
+        return &#34;&#34;
+    return self._page_texts[index]</code></pre>
+</details>
+<div class="desc"><p>Return a page label.</p></div>
+</dd>
+<dt id="m45wxcontrols.AccessibleListbook.GetSelection"><code class="name flex">
+<span>def <span class="ident">GetSelection</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GetSelection(self):
+    &#34;&#34;&#34;
+    Return the selected page index, or wx.NOT_FOUND.
+    &#34;&#34;&#34;
+    return self._selection</code></pre>
+</details>
+<div class="desc"><p>Return the selected page index, or wx.NOT_FOUND.</p></div>
+</dd>
+<dt id="m45wxcontrols.AccessibleListbook.GetStaticLabel"><code class="name flex">
+<span>def <span class="ident">GetStaticLabel</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GetStaticLabel(self):
+    &#34;&#34;&#34;
+    Return the text shown above the category list.
+    &#34;&#34;&#34;
+    return self.list_label.GetLabel()</code></pre>
+</details>
+<div class="desc"><p>Return the text shown above the category list.</p></div>
+</dd>
+<dt id="m45wxcontrols.AccessibleListbook.InsertPage"><code class="name flex">
+<span>def <span class="ident">InsertPage</span></span>(<span>self, index, page, text, select=False, imageId=-1)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def InsertPage(self, index, page, text, select=False, imageId=wx.NOT_FOUND):
+    &#34;&#34;&#34;
+    Insert a page at a specific index.
+    &#34;&#34;&#34;
+    index = max(0, min(index, self.GetPageCount()))
+    self._prepare_page(page)
+
+    self._pages.insert(index, page)
+    self._page_texts.insert(index, str(text))
+    self._page_images.insert(index, imageId)
+    self.listbox.Insert(str(text), index)
+    self._page_sizer.Insert(index, page, 1, wx.EXPAND)
+    page.Hide()
+
+    if self._selection == wx.NOT_FOUND or select:
+        self.ChangeSelection(index)
+    elif index &lt;= self._selection:
+        self._selection += 1
+        self.listbox.SetSelection(self._selection)
+
+    self.Layout()
+    return True</code></pre>
+</details>
+<div class="desc"><p>Insert a page at a specific index.</p></div>
+</dd>
+<dt id="m45wxcontrols.AccessibleListbook.RemovePage"><code class="name flex">
+<span>def <span class="ident">RemovePage</span></span>(<span>self, index)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def RemovePage(self, index):
+    &#34;&#34;&#34;
+    Remove a page without destroying it.
+
+    Returns:
+        wx.Window | None: Removed page, or None for an invalid index.
+    &#34;&#34;&#34;
+    if not self._is_valid_index(index):
+        return None
+
+    page = self._pages.pop(index)
+    del self._page_texts[index]
+    del self._page_images[index]
+    self.listbox.Delete(index)
+    self._page_sizer.Detach(page)
+    page.Hide()
+
+    if not self._pages:
+        self._selection = wx.NOT_FOUND
+        self.listbox.SetSelection(wx.NOT_FOUND)
+    elif index == self._selection:
+        self._selection = wx.NOT_FOUND
+        self.ChangeSelection(min(index, self.GetPageCount() - 1))
+    elif index &lt; self._selection:
+        self._selection -= 1
+        self.listbox.SetSelection(self._selection)
+
+    self.Layout()
+    return page</code></pre>
+</details>
+<div class="desc"><p>Remove a page without destroying it.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>wx.Window | None</code></dt>
+<dd>Removed page, or None for an invalid index.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.AccessibleListbook.SetListWidth"><code class="name flex">
+<span>def <span class="ident">SetListWidth</span></span>(<span>self, width)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def SetListWidth(self, width):
+    &#34;&#34;&#34;
+    Set the fixed width of the category list.
+    &#34;&#34;&#34;
+    item = self.GetSizer().GetItem(self.listbox)
+    if item is not None:
+        item.SetMinSize(width, -1)
+        self.Layout()</code></pre>
+</details>
+<div class="desc"><p>Set the fixed width of the category list.</p></div>
+</dd>
+<dt id="m45wxcontrols.AccessibleListbook.SetPageImage"><code class="name flex">
+<span>def <span class="ident">SetPageImage</span></span>(<span>self, index, imageId)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def SetPageImage(self, index, imageId):
+    &#34;&#34;&#34;
+    Store an image id for API compatibility.
+
+    wx.ListBox does not display images, but callers can still keep their
+    Listbook-oriented code paths intact.
+    &#34;&#34;&#34;
+    if not self._is_valid_index(index):
+        return False
+    self._page_images[index] = imageId
+    return True</code></pre>
+</details>
+<div class="desc"><p>Store an image id for API compatibility.</p>
+<p>wx.ListBox does not display images, but callers can still keep their
+Listbook-oriented code paths intact.</p></div>
+</dd>
+<dt id="m45wxcontrols.AccessibleListbook.SetPageText"><code class="name flex">
+<span>def <span class="ident">SetPageText</span></span>(<span>self, index, text)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def SetPageText(self, index, text):
+    &#34;&#34;&#34;
+    Set a page label.
+
+    Returns:
+        bool: True when the label was updated.
+    &#34;&#34;&#34;
+    if not self._is_valid_index(index):
+        return False
+    self._page_texts[index] = str(text)
+    self.listbox.SetString(index, str(text))
+    return True</code></pre>
+</details>
+<div class="desc"><p>Set a page label.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True when the label was updated.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.AccessibleListbook.SetSelection"><code class="name flex">
+<span>def <span class="ident">SetSelection</span></span>(<span>self, index)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def SetSelection(self, index):
+    &#34;&#34;&#34;
+    Select a page and emit listbook page changing/changed events.
+
+    Returns:
+        int: Previously selected index, or wx.NOT_FOUND if selection failed.
+    &#34;&#34;&#34;
+    return self._set_selection(index, emit_events=True)</code></pre>
+</details>
+<div class="desc"><p>Select a page and emit listbook page changing/changed events.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>Previously selected index, or wx.NOT_FOUND if selection failed.</dd>
+</dl></div>
+</dd>
+<dt id="m45wxcontrols.AccessibleListbook.SetStaticLabel"><code class="name flex">
+<span>def <span class="ident">SetStaticLabel</span></span>(<span>self, label)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def SetStaticLabel(self, label):
+    &#34;&#34;&#34;
+    Set the text shown above the category list.
+
+    This is useful for localized applications because wx.Panel itself does
+    not accept a label argument.
+    &#34;&#34;&#34;
+    self.list_label.SetLabel(str(label))
+    self.Layout()</code></pre>
+</details>
+<div class="desc"><p>Set the text shown above the category list.</p>
+<p>This is useful for localized applications because wx.Panel itself does
+not accept a label argument.</p></div>
+</dd>
+</dl>
+</dd>
 <dt id="m45wxcontrols.AccessibleSpinCtrl"><code class="flex name class">
 <span>class <span class="ident">AccessibleSpinCtrl</span></span>
 <span>(</span><span>parent, label_text, initial_val, min_val, max_val, inc)</span>
@@ -1024,6 +1940,12 @@ callers to provide custom OK and Cancel labels.</p>
         else:
             for index in self.GetSelectedRows():
                 self.control.Select(index, False)
+
+    def SetFocus(self):
+        &#34;&#34;&#34;
+        Move keyboard focus to list control.
+        &#34;&#34;&#34;
+        self.control.SetFocus()
 
     def FocusRow(self, index):
         &#34;&#34;&#34;
@@ -2073,6 +2995,22 @@ clamped to the beginning or end.</dd>
 </details>
 <div class="desc"><p>Set the width of a column.</p></div>
 </dd>
+<dt id="m45wxcontrols.UniversalListCtrl.SetFocus"><code class="name flex">
+<span>def <span class="ident">SetFocus</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def SetFocus(self):
+    &#34;&#34;&#34;
+    Move keyboard focus to list control.
+    &#34;&#34;&#34;
+    self.control.SetFocus()</code></pre>
+</details>
+<div class="desc"><p>Move keyboard focus to list control.</p></div>
+</dd>
 <dt id="m45wxcontrols.UniversalListCtrl.SetItemText"><code class="name flex">
 <span>def <span class="ident">SetItemText</span></span>(<span>self, row, col, text)</span>
 </code></dt>
@@ -2223,6 +3161,7 @@ def batch_update(self):
 <ul id="index">
 <li><h3><a href="#header-submodules">Sub-modules</a></h3>
 <ul>
+<li><code><a title="m45wxcontrols.accessible_listbook" href="accessible_listbook.html">m45wxcontrols.accessible_listbook</a></code></li>
 <li><code><a title="m45wxcontrols.accessible_spin" href="accessible_spin.html">m45wxcontrols.accessible_spin</a></code></li>
 <li><code><a title="m45wxcontrols.custom_text_entry" href="custom_text_entry.html">m45wxcontrols.custom_text_entry</a></code></li>
 <li><code><a title="m45wxcontrols.universal_list" href="universal_list.html">m45wxcontrols.universal_list</a></code></li>
@@ -2230,6 +3169,32 @@ def batch_update(self):
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
+<li>
+<h4><code><a title="m45wxcontrols.AccessibleListbook" href="#m45wxcontrols.AccessibleListbook">AccessibleListbook</a></code></h4>
+<ul class="two-column">
+<li><code><a title="m45wxcontrols.AccessibleListbook.AddPage" href="#m45wxcontrols.AccessibleListbook.AddPage">AddPage</a></code></li>
+<li><code><a title="m45wxcontrols.AccessibleListbook.AdvanceSelection" href="#m45wxcontrols.AccessibleListbook.AdvanceSelection">AdvanceSelection</a></code></li>
+<li><code><a title="m45wxcontrols.AccessibleListbook.ChangeSelection" href="#m45wxcontrols.AccessibleListbook.ChangeSelection">ChangeSelection</a></code></li>
+<li><code><a title="m45wxcontrols.AccessibleListbook.DeleteAllPages" href="#m45wxcontrols.AccessibleListbook.DeleteAllPages">DeleteAllPages</a></code></li>
+<li><code><a title="m45wxcontrols.AccessibleListbook.DeletePage" href="#m45wxcontrols.AccessibleListbook.DeletePage">DeletePage</a></code></li>
+<li><code><a title="m45wxcontrols.AccessibleListbook.GetCurrentPage" href="#m45wxcontrols.AccessibleListbook.GetCurrentPage">GetCurrentPage</a></code></li>
+<li><code><a title="m45wxcontrols.AccessibleListbook.GetListBox" href="#m45wxcontrols.AccessibleListbook.GetListBox">GetListBox</a></code></li>
+<li><code><a title="m45wxcontrols.AccessibleListbook.GetPage" href="#m45wxcontrols.AccessibleListbook.GetPage">GetPage</a></code></li>
+<li><code><a title="m45wxcontrols.AccessibleListbook.GetPageArea" href="#m45wxcontrols.AccessibleListbook.GetPageArea">GetPageArea</a></code></li>
+<li><code><a title="m45wxcontrols.AccessibleListbook.GetPageCount" href="#m45wxcontrols.AccessibleListbook.GetPageCount">GetPageCount</a></code></li>
+<li><code><a title="m45wxcontrols.AccessibleListbook.GetPageImage" href="#m45wxcontrols.AccessibleListbook.GetPageImage">GetPageImage</a></code></li>
+<li><code><a title="m45wxcontrols.AccessibleListbook.GetPageText" href="#m45wxcontrols.AccessibleListbook.GetPageText">GetPageText</a></code></li>
+<li><code><a title="m45wxcontrols.AccessibleListbook.GetSelection" href="#m45wxcontrols.AccessibleListbook.GetSelection">GetSelection</a></code></li>
+<li><code><a title="m45wxcontrols.AccessibleListbook.GetStaticLabel" href="#m45wxcontrols.AccessibleListbook.GetStaticLabel">GetStaticLabel</a></code></li>
+<li><code><a title="m45wxcontrols.AccessibleListbook.InsertPage" href="#m45wxcontrols.AccessibleListbook.InsertPage">InsertPage</a></code></li>
+<li><code><a title="m45wxcontrols.AccessibleListbook.RemovePage" href="#m45wxcontrols.AccessibleListbook.RemovePage">RemovePage</a></code></li>
+<li><code><a title="m45wxcontrols.AccessibleListbook.SetListWidth" href="#m45wxcontrols.AccessibleListbook.SetListWidth">SetListWidth</a></code></li>
+<li><code><a title="m45wxcontrols.AccessibleListbook.SetPageImage" href="#m45wxcontrols.AccessibleListbook.SetPageImage">SetPageImage</a></code></li>
+<li><code><a title="m45wxcontrols.AccessibleListbook.SetPageText" href="#m45wxcontrols.AccessibleListbook.SetPageText">SetPageText</a></code></li>
+<li><code><a title="m45wxcontrols.AccessibleListbook.SetSelection" href="#m45wxcontrols.AccessibleListbook.SetSelection">SetSelection</a></code></li>
+<li><code><a title="m45wxcontrols.AccessibleListbook.SetStaticLabel" href="#m45wxcontrols.AccessibleListbook.SetStaticLabel">SetStaticLabel</a></code></li>
+</ul>
+</li>
 <li>
 <h4><code><a title="m45wxcontrols.AccessibleSpinCtrl" href="#m45wxcontrols.AccessibleSpinCtrl">AccessibleSpinCtrl</a></code></h4>
 <ul class="">
@@ -2279,6 +3244,7 @@ def batch_update(self):
 <li><code><a title="m45wxcontrols.UniversalListCtrl.SelectRows" href="#m45wxcontrols.UniversalListCtrl.SelectRows">SelectRows</a></code></li>
 <li><code><a title="m45wxcontrols.UniversalListCtrl.SetChecked" href="#m45wxcontrols.UniversalListCtrl.SetChecked">SetChecked</a></code></li>
 <li><code><a title="m45wxcontrols.UniversalListCtrl.SetColumnWidth" href="#m45wxcontrols.UniversalListCtrl.SetColumnWidth">SetColumnWidth</a></code></li>
+<li><code><a title="m45wxcontrols.UniversalListCtrl.SetFocus" href="#m45wxcontrols.UniversalListCtrl.SetFocus">SetFocus</a></code></li>
 <li><code><a title="m45wxcontrols.UniversalListCtrl.SetItemText" href="#m45wxcontrols.UniversalListCtrl.SetItemText">SetItemText</a></code></li>
 <li><code><a title="m45wxcontrols.UniversalListCtrl.SetRow" href="#m45wxcontrols.UniversalListCtrl.SetRow">SetRow</a></code></li>
 <li><code><a title="m45wxcontrols.UniversalListCtrl.SetRowData" href="#m45wxcontrols.UniversalListCtrl.SetRowData">SetRowData</a></code></li>

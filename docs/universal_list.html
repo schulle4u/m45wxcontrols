@@ -533,6 +533,12 @@ el.replaceWith(d);
             for index in self.GetSelectedRows():
                 self.control.Select(index, False)
 
+    def SetFocus(self):
+        &#34;&#34;&#34;
+        Move keyboard focus to list control.
+        &#34;&#34;&#34;
+        self.control.SetFocus()
+
     def FocusRow(self, index):
         &#34;&#34;&#34;
         Move keyboard focus to a row without changing its checked state.
@@ -1581,6 +1587,22 @@ clamped to the beginning or end.</dd>
 </details>
 <div class="desc"><p>Set the width of a column.</p></div>
 </dd>
+<dt id="m45wxcontrols.universal_list.UniversalListCtrl.SetFocus"><code class="name flex">
+<span>def <span class="ident">SetFocus</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def SetFocus(self):
+    &#34;&#34;&#34;
+    Move keyboard focus to list control.
+    &#34;&#34;&#34;
+    self.control.SetFocus()</code></pre>
+</details>
+<div class="desc"><p>Move keyboard focus to list control.</p></div>
+</dd>
 <dt id="m45wxcontrols.universal_list.UniversalListCtrl.SetItemText"><code class="name flex">
 <span>def <span class="ident">SetItemText</span></span>(<span>self, row, col, text)</span>
 </code></dt>
@@ -1769,6 +1791,7 @@ def batch_update(self):
 <li><code><a title="m45wxcontrols.universal_list.UniversalListCtrl.SelectRows" href="#m45wxcontrols.universal_list.UniversalListCtrl.SelectRows">SelectRows</a></code></li>
 <li><code><a title="m45wxcontrols.universal_list.UniversalListCtrl.SetChecked" href="#m45wxcontrols.universal_list.UniversalListCtrl.SetChecked">SetChecked</a></code></li>
 <li><code><a title="m45wxcontrols.universal_list.UniversalListCtrl.SetColumnWidth" href="#m45wxcontrols.universal_list.UniversalListCtrl.SetColumnWidth">SetColumnWidth</a></code></li>
+<li><code><a title="m45wxcontrols.universal_list.UniversalListCtrl.SetFocus" href="#m45wxcontrols.universal_list.UniversalListCtrl.SetFocus">SetFocus</a></code></li>
 <li><code><a title="m45wxcontrols.universal_list.UniversalListCtrl.SetItemText" href="#m45wxcontrols.universal_list.UniversalListCtrl.SetItemText">SetItemText</a></code></li>
 <li><code><a title="m45wxcontrols.universal_list.UniversalListCtrl.SetRow" href="#m45wxcontrols.universal_list.UniversalListCtrl.SetRow">SetRow</a></code></li>
 <li><code><a title="m45wxcontrols.universal_list.UniversalListCtrl.SetRowData" href="#m45wxcontrols.universal_list.UniversalListCtrl.SetRowData">SetRowData</a></code></li>

@@ -15,6 +15,21 @@ from m45wxcontrols import AccessibleSpinCtrl, CustomTextEntryDialog, UniversalLi
 
 Below is an overview of all the control wrappers currently available. The full API documentation can be found in the 'docs' folder. 
 
+### AccessibleListbook
+Accessible `wx.Listbook`-style control using wx.ListBox for page selection.
+
+The category list is a plain `wx.ListBox`, which is easier to use with screen readers on platforms where `wx.ListCtrl` accessibility is limited. Pages are ordinary `wx.Window` instances that are shown when their matching list entry is selected.
+
+The following arguments are available: 
+
+* `parent`: Parent wx window.
+* `id`: Window id.
+* `pos`: Initial position.
+* `size`: Initial size.
+* `style`: `wx.Panel` style flags.
+* `name`: Control name.
+* `list_width`: Width of the category list in pixels.
+
 ### AccessibleSpinCtrl
 An accessible floating-point spin control composed of wx widgets. Can be used as a more accessible alternative to `wx.SpinCtrlDouble`.
 

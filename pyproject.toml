@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "m45wxcontrols"
-version = "0.2.0"
+version = "0.3.0"
 description = "Custom control wrappers for wxPython by M45Development."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -16,7 +16,7 @@ maintainers = [
   { name = "Steffen Schultz", email = "steffenschultz@mailbox.org" },
 ]
 keywords = [
-  "wxpython", "wxwidgets", "spinctrldouble", "listctrl", "dataview", "accessibility", "a11y", "screen-reader",
+  "wxpython", "wxwidgets", "spinctrldouble", "listbook", "listctrl", "dataview", "accessibility", "a11y", "screen-reader",
 ]
 classifiers = [
   "Programming Language :: Python :: 3",
