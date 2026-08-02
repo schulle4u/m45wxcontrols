@@ -8,7 +8,7 @@ This package contains custom wrappers for existing wxPython controls, primarily 
 Until official PyPI packages are available, Grab the latest whl from the releases page and install it into your project environment. Then import one of the provided controls, e.g.: 
 
 ```
-from m45wxcontrols import AccessibleSpinCtrl, CustomTextEntryDialog, UniversalListCtrl
+from m45wxcontrols import AccessibleListbook, AccessibleSpinCtrl, UniversalListCtrl
 ```
 
 ## Controls
@@ -48,6 +48,8 @@ The following arguments are available:
 Text entry dialog with custom button labels.
 
 The dialog mirrors the simple wx.TextEntryDialog workflow while allowing callers to provide custom OK and Cancel labels.
+
+**Note**: Use `wx.Locale` if you only require the default labels to be translated correctly. 
 
 The following arguments are available: 
 
