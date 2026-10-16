@@ -29,6 +29,12 @@ dependencies = [
   "wxPython>=4.3.0",
 ]
 
+[project.optional-dependencies]
+build = [
+    "build>=1.6.1",
+    "pdoc>=16.0.0",
+]
+
 [project.urls]
 Homepage = "https://m45.dev"
 Source = "https://github.com/schulle4u/m45wxcontrols"
