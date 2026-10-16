@@ -63,7 +63,7 @@ The following arguments are available:
 ### UniversalListCtrl
 Cross-platform list wrapper with optional checkbox support.
 
-`wx.ListCtrl` is used on Windows, while `wx.dataview.DataViewListCtrl` is used on Linux and macOS for better accessibility. The wrapper normalizes list operations used by applications so callers do not need to branch on the active control type.
+By default, `wx.ListCtrl` is used on Windows, while `wx.dataview.DataViewListCtrl` is used on Linux and macOS for better accessibility. The wrapper normalizes list operations used by applications so callers do not need to branch on the active control type.
 
 The following arguments are available: 
 
@@ -71,7 +71,9 @@ The following arguments are available:
 * `size`: Initial control size (default: `wx.DefaultSize`).
 * `style`: wx style flags applied to the underlying list control (default: `wx.LC_REPORT | wx.BORDER_SUNKEN`).
 * `checkboxes`: Whether rows should support checked/unchecked state (default: False).
-* `force_dataview`: Force DataViewListCtrl even on platforms that would normally use wx.ListCtrl (default: False).
+* `list_type`: `"auto"` selects the control by platform (default), `"dataview"` forces `DataViewListCtrl`, and `"list"` forces `wx.ListCtrl`. Invalid values raise `ValueError`.
+
+Run `python examples/universal_list_demo.py --list-type dataview` (or `auto` / `list`) to try each selection in the demo.
 
 ## License
 

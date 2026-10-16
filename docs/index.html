@@ -1457,7 +1457,7 @@ callers to provide custom OK and Cancel labels.</p>
 </dd>
 <dt id="m45wxcontrols.UniversalListCtrl"><code class="flex name class">
 <span>class <span class="ident">UniversalListCtrl</span></span>
-<span>(</span><span>parent,<br>size=wx.Size(-1, -1),<br>style=134217760,<br>checkboxes=False,<br>force_dataview=False)</span>
+<span>(</span><span>parent,<br>size=wx.Size(-1, -1),<br>style=134217760,<br>checkboxes=False,<br>list_type=&#39;auto&#39;)</span>
 </code></dt>
 <dd>
 <details class="source">
@@ -1468,7 +1468,7 @@ callers to provide custom OK and Cancel labels.</p>
     &#34;&#34;&#34;
     Cross-platform list wrapper with optional checkbox support.
 
-    wx.ListCtrl is used on Windows, while wx.dataview.DataViewListCtrl is used
+    By default, wx.ListCtrl is used on Windows, while wx.dataview.DataViewListCtrl is used
     on Linux and macOS for better accessibility. The wrapper normalizes list
     operations used by applications so callers do not need to branch on the
     active control type.
@@ -1482,7 +1482,7 @@ callers to provide custom OK and Cancel labels.</p>
         size=wx.DefaultSize,
         style=wx.LC_REPORT | wx.BORDER_SUNKEN,
         checkboxes=False,
-        force_dataview=False
+        list_type=&quot;auto&quot;
     ):
         &#34;&#34;&#34;
         Initialize universal list control.
@@ -1492,11 +1492,20 @@ callers to provide custom OK and Cancel labels.</p>
             size: Initial control size.
             style: wx style flags applied to the underlying list control.
             checkboxes: Whether rows should support checked/unchecked state.
-            force_dataview: Force DataViewListCtrl even on platforms that would
-                normally use wx.ListCtrl.
+            list_type: Control type: &quot;auto&quot; selects by platform (default),
+                &quot;dataview&quot; forces DataViewListCtrl, and &quot;list&quot; forces wx.ListCtrl.
+
+        Raises:
+            ValueError: If list_type is not &quot;auto&quot;, &quot;dataview&quot;, or &quot;list&quot;.
         &#34;&#34;&#34;
-        # We use DataViewListCtrl for Linux and macOS unless forced (better accessibility)
-        self.use_dataview = sys.platform.startswith(&#39;linux&#39;) or sys.platform == &#39;darwin&#39; or force_dataview
+        if list_type not in (&quot;auto&quot;, &quot;dataview&quot;, &quot;list&quot;):
+            raise ValueError(&#39;list_type must be &quot;auto&quot;, &quot;dataview&quot;, or &quot;list&quot;&#39;)
+
+        # Automatically use DataViewListCtrl on Linux and macOS for accessibility.
+        self.use_dataview = list_type == &quot;dataview&quot; or (
+            list_type == &quot;auto&quot;
+            and (sys.platform.startswith(&#39;linux&#39;) or sys.platform == &#39;darwin&#39;)
+        )
         self.checkboxes = checkboxes
         self._checkbox_column = None
         self._row_data = []
@@ -2092,7 +2101,7 @@ callers to provide custom OK and Cancel labels.</p>
         return self.control</code></pre>
 </details>
 <div class="desc"><p>Cross-platform list wrapper with optional checkbox support.</p>
-<p>wx.ListCtrl is used on Windows, while wx.dataview.DataViewListCtrl is used
+<p>By default, wx.ListCtrl is used on Windows, while wx.dataview.DataViewListCtrl is used
 on Linux and macOS for better accessibility. The wrapper normalizes list
 operations used by applications so callers do not need to branch on the
 active control type.</p>
@@ -2107,9 +2116,14 @@ active control type.</p>
 <dd>wx style flags applied to the underlying list control.</dd>
 <dt><strong><code>checkboxes</code></strong></dt>
 <dd>Whether rows should support checked/unchecked state.</dd>
-<dt><strong><code>force_dataview</code></strong></dt>
-<dd>Force DataViewListCtrl even on platforms that would
-normally use wx.ListCtrl.</dd>
+<dt><strong><code>list_type</code></strong></dt>
+<dd>Control type: <code>auto</code> selects by platform (default),
+<code>dataview</code> forces DataViewListCtrl, and <code>list</code> forces wx.ListCtrl.</dd>
+</dl>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><strong><code>ValueError</code></strong></dt>
+<dd>If list_type is not <code>auto</code>, <code>dataview</code>, or <code>list</code>.</dd>
 </dl></div>
 <h3>Class variables</h3>
 <dl>

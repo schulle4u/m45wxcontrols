@@ -12,7 +12,7 @@ class UniversalListCtrl:
     """
     Cross-platform list wrapper with optional checkbox support.
 
-    wx.ListCtrl is used on Windows, while wx.dataview.DataViewListCtrl is used
+    By default, wx.ListCtrl is used on Windows, while wx.dataview.DataViewListCtrl is used
     on Linux and macOS for better accessibility. The wrapper normalizes list
     operations used by applications so callers do not need to branch on the
     active control type.
@@ -26,7 +26,7 @@ class UniversalListCtrl:
         size=wx.DefaultSize,
         style=wx.LC_REPORT | wx.BORDER_SUNKEN,
         checkboxes=False,
-        force_dataview=False
+        list_type="auto"
     ):
         """
         Initialize universal list control.
@@ -36,11 +36,20 @@ class UniversalListCtrl:
             size: Initial control size.
             style: wx style flags applied to the underlying list control.
             checkboxes: Whether rows should support checked/unchecked state.
-            force_dataview: Force DataViewListCtrl even on platforms that would
-                normally use wx.ListCtrl.
+            list_type: Control type: "auto" selects by platform (default),
+                "dataview" forces DataViewListCtrl, and "list" forces wx.ListCtrl.
+
+        Raises:
+            ValueError: If list_type is not "auto", "dataview", or "list".
         """
-        # We use DataViewListCtrl for Linux and macOS unless forced (better accessibility)
-        self.use_dataview = sys.platform.startswith('linux') or sys.platform == 'darwin' or force_dataview
+        if list_type not in ("auto", "dataview", "list"):
+            raise ValueError('list_type must be "auto", "dataview", or "list"')
+
+        # Automatically use DataViewListCtrl on Linux and macOS for accessibility.
+        self.use_dataview = list_type == "dataview" or (
+            list_type == "auto"
+            and (sys.platform.startswith('linux') or sys.platform == 'darwin')
+        )
         self.checkboxes = checkboxes
         self._checkbox_column = None
         self._row_data = []

@@ -1,3 +1,5 @@
+import argparse
+
 import wx
 
 from m45wxcontrols import UniversalListCtrl
@@ -40,7 +42,7 @@ SAMPLE_TRACKS = [
 
 
 class UniversalListDemo(wx.Frame):
-    def __init__(self, parent, title):
+    def __init__(self, parent, title, list_type="auto"):
         super().__init__(parent, title=title, size=(920, 620))
 
         self.next_track_number = len(SAMPLE_TRACKS) + 1
@@ -50,7 +52,7 @@ class UniversalListDemo(wx.Frame):
             panel,
             style=wx.LC_REPORT | wx.BORDER_SUNKEN,
             checkboxes=True,
-            force_dataview=False,
+            list_type=list_type,
         )
         self._create_columns()
 
@@ -274,7 +276,15 @@ class UniversalListDemo(wx.Frame):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="UniversalListCtrl API demo")
+    parser.add_argument(
+        "--list-type",
+        choices=("auto", "dataview", "list"),
+        default="auto",
+        help="List control type (default: auto, selected by platform)",
+    )
+    args = parser.parse_args()
     app = wx.App()
-    frame = UniversalListDemo(None, "UniversalListCtrl Demo")
+    frame = UniversalListDemo(None, "UniversalListCtrl Demo", list_type=args.list_type)
     frame.Show()
     app.MainLoop()
